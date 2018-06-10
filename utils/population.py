@@ -3,13 +3,12 @@ import numpy as np
 
 
 class Population(object):
-    def __init__(self, network_params, pop_size, mutation_rate, mutation_scale, interval_selection=False):
+    def __init__(self, network_params, pop_size, mutation_rate, mutation_scale, breeding_ratio):
         self.network_params = network_params
         self.population_size = pop_size
         self.mutation_rate = mutation_rate
         self.mutation_scale = mutation_scale
-
-        self.interval_sel = interval_selection
+        self.breeding_ratio = breeding_ratio
 
         self.genomes = self.initial_pop()
 
@@ -24,15 +23,28 @@ class Population(object):
         # find fitness by normalizing score
         self.normalize_score()
 
-        # find indexes of genomes for next generation
-        indexes = self.pool_selection()
+        # find pool of genomes to breed and mutate
+        parents_1 = self.pool_selection()
+        parents_2 = self.pool_selection()
+        children = []
 
         # create next generation
-        new_genomes = []
-        for idx in indexes:
-            new_genomes.append(Genome(self.network_params, self.mutation_rate, self.mutation_scale, inherit=self.genomes[idx]))
+        for p1, p2 in zip(parents_1, parents_2):
+            if np.random.random() < self.breeding_ratio:
+                # breeding
+                children.append(Genome(self.network_params,
+                                          self.mutation_rate,
+                                          self.mutation_scale,
+                                          parent_1=self.genomes[p1],
+                                          parent_2=self.genomes[p2]))
+            else:
+                # mutating
+                children.append(Genome(self.network_params,
+                                          self.mutation_rate,
+                                          self.mutation_scale,
+                                          parent_1=self.genomes[p1]))
 
-        self.genomes = new_genomes
+        self.genomes = children
 
     def normalize_score(self):
         # create np array of genome scores
@@ -50,7 +62,7 @@ class Population(object):
         for fitness, genome in zip(score_arr, self.genomes):
             genome.fitness = fitness
 
-    def pool_selection(self):
+    def pool_selection(self, interval_sel=False):
         # sort genomes by fitness
         self.genomes.sort(key=lambda x: x.fitness, reverse=True)
 
@@ -62,7 +74,7 @@ class Population(object):
             idx, cnt = 0, 0
 
             # fitness proportionate selection or stochastic universal sampling
-            r = np.random.uniform(intervals[i], intervals[i + 1]) if self.interval_sel else np.random.random()
+            r = np.random.uniform(intervals[i], intervals[i + 1]) if interval_sel else np.random.random()
 
             while cnt < r and idx < self.population_size:
                 cnt += self.genomes[idx].fitness

@@ -4,9 +4,14 @@ import copy
 
 
 class Genome(object):
-    def __init__(self, network_params, mutation_rate, mutation_scale, inherit=None):
+    def __init__(self, network_params, mutation_rate, mutation_scale, parent_1=None, parent_2=None):
+        # fitness is score normalized
         self.fitness = 0
         self.score = 0
+
+        # keep track of how genome came to be
+        self.mutated = False
+        self.bred = False
 
         self.inputs = network_params['input']
         self.hidden = network_params['hidden']
@@ -18,13 +23,22 @@ class Genome(object):
         self.weights = None
         self.biases = None
 
-        if inherit is None:
-            self.init_w_b()
-        else:
-            # perform deep copy so weights are not by reference
-            self.weights = copy.deepcopy(inherit.weights)
-            self.biases = copy.deepcopy(inherit.biases)
+        # two parents available for breeding
+        if parent_2 is not None:
+            self.weights = copy.deepcopy(parent_1.weights)
+            self.biases = copy.deepcopy(parent_1.biases)
+            self.breed(parent_2)
+            self.bred = True
+
+        # mutate if only one parent available
+        elif parent_1 is not None:
+            self.weights = copy.deepcopy(parent_1.weights)
+            self.biases = copy.deepcopy(parent_1.biases)
             self.mutate()
+            self.mutated = True
+
+        # initial values when population is first created
+        else: self.init_w_b()
 
         # pass genome to network object
         self.model = Network(self)
@@ -51,3 +65,11 @@ class Genome(object):
                 # randomly mutate based on mutation rate
                 if np.random.random() < self.mutation_rate:
                     self.weights[i][j][k] += np.random.normal(scale=self.mutation_scale) * 0.5
+
+    def breed(self, parent):
+        # iterate through layers
+        for i, layers in enumerate(self.weights):
+            for (j, k), x in np.ndenumerate(layers):
+                # equal chance of weight being from each parent
+                if np.random.random() > 0.5:
+                    self.weights[i][j][k] = parent.weights[i][j][k]
