@@ -72,8 +72,10 @@ class Rsi(object):
         self.prev_losses.pop(0)
 
         rs = self.calc_rs()
+        self.value.append(100 - (100 / (1 + rs)))
+        self.value.pop(0)
 
-        return 100 - (100 / (1 + rs))
+        return self.value[-1]
 
 class StochRsi(Rsi):
     def __init__(self, data, period=14):
@@ -105,3 +107,11 @@ class StochRsi(Rsi):
             ma_d[idx-1] = np.average(ma_d[idx - pd:idx])
         
         return ma_k - ma_d
+
+    def update_stoch_rsi(self, value):
+        _ = super(StochRsi, self).calc_rsi(value)
+
+        window = self.value[-self.period:]
+        high = np.amax(window); low = np.amin(window)
+        
+        return self.value[idx-1] - low)/ (high - low)
