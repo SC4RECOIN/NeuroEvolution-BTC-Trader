@@ -8,6 +8,7 @@ from population.network import Network
 from data.data_util import load_indicators
 import matplotlib.pyplot as plt
 from data.data_util import plot
+import signal
 
 # suppress tf GPU logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -16,10 +17,11 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 plt.ion()
 
 # catch interupt to kill program
-signal.signal(signal.SIGINT, signal_handler)
 def signal_handler(signal, frame):
     print('\nprogram exiting')
     sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
 
 def calculate_profit(trades, trade_prices):
     btc_wallet = 0.
