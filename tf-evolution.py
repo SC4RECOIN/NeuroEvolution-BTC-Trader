@@ -15,6 +15,11 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # interactive plots
 plt.ion()
 
+# catch interupt to kill program
+signal.signal(signal.SIGINT, signal_handler)
+def signal_handler(signal, frame):
+    print('\nprogram exiting')
+    sys.exit(0)
 
 def calculate_profit(trades, trade_prices):
     btc_wallet = 0.
@@ -48,8 +53,8 @@ if __name__ == '__main__':
 
     # network parameters
     network_params = {
-        'input': 4,
-        'hidden': [16, 32],
+        'input': 5,
+        'hidden': [16, 16, 16],
         'output': 2
     }
 

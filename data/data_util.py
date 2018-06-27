@@ -7,6 +7,7 @@ import os
 from ta.macd import PPO
 from ta.rsi import StochRsi
 from ta.coppock import Coppock
+from ta.poly_interpolation import PolyInter
 
 
 def fetch_data(interval):
@@ -54,13 +55,15 @@ def load_indicators():
     # obtain features
     indicators = []
     indicators.append(PPO(hist['close'], 6, 12, 3).values)
-    indicators.append(StochRsi(hist['close'], period=14).values)
+    indicators.append(StochRsi(hist['close'], period=14).stoch_histo)
     indicators.append(Coppock(hist['close'], wma_pd=10, roc_long=6, roc_short=3).values)
-    indicators.append((hist['high'] - hist['low']) / hist['close'])
+    indicators.append(PolyInter(hist['close'], progress_bar=True).values)
+    indicators.append(((hist['high'] - hist['close']) - (hist['close'] - hist['low'])) / hist['close'])
 
     # truncate bad values and transpose
-    X = np.array(indicators)[:, 30:-1].transpose()
-
+    X = np.array(indicators)[:, 30:].transpose()
+    hist  = hist['close'][30:]
+    
     # test split index
     split_idx = int(0.8 * X.shape[0])
 
@@ -71,7 +74,7 @@ def load_indicators():
 
     # split training data
     X_train, X_test = X[:split_idx], X[split_idx:]
-    prices_train, prices_test = hist['close'][:split_idx], hist['close'][split_idx:]
+    prices_train, prices_test = hist[:split_idx], hist[split_idx:]
 
     return X_train, X_test, prices_train, prices_test
 
