@@ -1,20 +1,16 @@
 import tensorflow as tf
 import numpy as np
 from time import time
+import random
 import os
 
 from population.population import Population
 from population.network import Network
-from data.data_util import load_indicators
-import matplotlib.pyplot as plt
-from data.data_util import plot
 import signal
+import sys
 
 # suppress tf GPU logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
-# interactive plots
-plt.ion()
 
 # catch interupt to kill program
 def signal_handler(signal, frame):
@@ -44,31 +40,45 @@ def calculate_profit(trades, trade_prices):
 
     return (usd_wallet / starting_cash - 1) * 100
 
+def calculate_acc(predictions, targets):
+    correct = 0
+    for pred, targ in zip(predictions, targets):
+        if np.argmax(pred) == np.argmax(targ): correct += 1
+
+    return correct / len(targets)
 
 if __name__ == '__main__':
+    encoding = {'Iris-setosa' : 0, 'Iris-versicolor' : 1, 'Iris-virginica' : 2}
+
+    X = []; Y = []
+    for line in open('data/Iris.csv'):
+        X.append(line.split(',')[:-1])
+        Y.append(encoding[line.split(',')[-1][:-1]])
+
+    Y = tf.keras.utils.to_categorical(Y)
+    X = np.array(X)
+
     # genetic parameters
-    pop_size = 150
+    pop_size = 1
     w_mutation_rate = 0.05
-    b_mutation_rate = 0.
+    b_mutation_rate = 0.0
     mutation_scale = 0.3
     generations = 1000
 
     # network parameters
+    timesteps = 5
     network_params = {
-        'input': 5,
-        'hidden': [16, 16, 16],
-        'output': 2
+        'network': 'recurrent',
+        'timesteps': timesteps,
+        'input': 1,
+        'hidden': [16],
+        'output': 3
     }
 
     # build initial population
     pop = Population(network_params, pop_size, mutation_scale, w_mutation_rate, b_mutation_rate)
+    tf.reset_default_graph()
     best_genome = pop.genomes[0]
-
-    # load indicators
-    indicators_train, indicators_test, prices_train, prices_test = load_indicators()
-
-    print('Buy and hold profit: {0:.2f}%'.format((prices_train[-1] / prices_train[0] - 1) * 100))
-    print('Train set size: ', indicators_train.shape[0], ' candles\n')
 
     # run for set number of generations
     for g in range(generations):
@@ -77,31 +87,29 @@ if __name__ == '__main__':
 
         pop.evolve()
 
+        # random subset of data, reshape
+        shuffle_index = np.random.permutation(len(Y))
+        X_subset, Y_subset = X[shuffle_index][:int(len(Y)/3)], Y[shuffle_index][:int(len(Y)/3)]
+        X_subset = X_subset.reshape((len(X_subset), timesteps, 1))
+
         # open session and evaluate population
         with tf.Session() as sess:
             print('evaluating population...')
 
             for genome in pop.genomes:
-                actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: indicators_train})
+                actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: X_subset})
 
                 # profit score
-                genome.score = calculate_profit(actions, prices_train)
+                genome.score = calculate_acc(actions, Y_subset)
 
                 # save best genome
                 if genome.score > best_genome.score:
                     best_genome = genome
-                    genome.save()
+                    # genome.save()
 
-            # plot best genome of generation
-            gen_best = pop.genomes[np.argmax(np.array([x.score for x in pop.genomes]))]
-            actions = sess.run(gen_best.model.prediction, feed_dict={gen_best.model.X: indicators_train})
-            actions_test = sess.run(gen_best.model.prediction, feed_dict={gen_best.model.X: indicators_test})
-            # plot(actions, prices_train, g)
-
-            print('average score: {0:.2f}'.format(np.average(np.array([x.score for x in pop.genomes]))))
-            print('best score: {0:.2f}'.format(max([x.score for x in pop.genomes])))
-            print('test score of best network: {0:.2f}%'.format(calculate_profit(actions_test, prices_test)))
-            print('record score: {0:.2f}'.format(best_genome.score))
-            print('time: {0:.2f}s\n'.format(time() - start))
+        print('average score: {0:.2f}'.format(np.average(np.array([x.score for x in pop.genomes]))))
+        print('best score: {0:.2f}'.format(max([x.score for x in pop.genomes])))
+        print('record score: {0:.2f}'.format(best_genome.score))
+        print('time: {0:.2f}s\n'.format(time() - start))
 
         tf.reset_default_graph()

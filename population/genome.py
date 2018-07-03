@@ -16,6 +16,13 @@ class Genome(object):
         self.inputs = network_params['input']
         self.hidden = network_params['hidden']
         self.outputs = network_params['output']
+        self.network = network_params['network']
+        self.timesteps = None
+
+        try:
+            if self.network == 'recurrent': self.timesteps = network_params['timesteps']
+        except:
+            raise AttributeError('Must specify timesteps for recurrent network')
 
         self.w_mutation_rate = w_mutation_rate
         self.b_mutation_rate = b_mutation_rate
