@@ -63,7 +63,7 @@ if __name__ == '__main__':
     w_mutation_rate = 0.05
     b_mutation_rate = 0.0
     mutation_scale = 0.3
-    generations = 1000
+    generations = 1
 
     # network parameters
     timesteps = 5
@@ -85,7 +85,7 @@ if __name__ == '__main__':
         start = time()
         print('{}\ncreating generation {}...'.format('=' * 22, g + 1))
 
-        pop.evolve()
+        # pop.evolve()
 
         # random subset of data, reshape
         shuffle_index = np.random.permutation(len(Y))
@@ -94,9 +94,13 @@ if __name__ == '__main__':
 
         # open session and evaluate population
         with tf.Session() as sess:
+            if network_params['network'] is 'recurrent':
+                sess.run(tf.global_variables_initializer())
+
             print('evaluating population...')
 
             for genome in pop.genomes:
+                print("running\n")
                 actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: X_subset})
 
                 # profit score
