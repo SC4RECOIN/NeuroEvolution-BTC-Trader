@@ -1,5 +1,7 @@
 from population.genome import Genome
+from time import time
 import numpy as np
+import tensorflow as tf
 
 
 class Population(object):
@@ -20,6 +22,8 @@ class Population(object):
 
         self.genomes = self.initial_pop()
 
+        self.verbose_load_bar = 25
+
     def initial_pop(self):
         genomes = []
         for i in range(self.population_size):
@@ -30,7 +34,10 @@ class Population(object):
 
         return genomes
 
-    def evolve(self):
+    def evolve(self, g, verbose=True):
+        if verbose:
+            print('{0}\ncreating population {1}'.format('='*self.verbose_load_bar, g+1))
+
         # find fitness by normalizing score
         self.normalize_score()
 
@@ -40,7 +47,7 @@ class Population(object):
         children = []
 
         # create next generation
-        for p1, p2 in zip(parents_1, parents_2):
+        for idx, (p1, p2) in enumerate(zip(parents_1, parents_2)):
             if np.random.random() < self.breeding_ratio:
                 # breeding
                 children.append(Genome(self.network_params,
@@ -57,6 +64,12 @@ class Population(object):
                                        self.b_mutation_rate,
                                        parent_1=self.genomes[p1]))
 
+            if verbose:
+                progress = int((idx + 1)/len(parents_1) * self.verbose_load_bar)
+                progress_left = self.verbose_load_bar - progress
+                print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
+
+        if verbose: print(' ' * (self.verbose_load_bar + 3), end='\r')
         self.genomes = children
 
     def normalize_score(self):
@@ -95,3 +108,31 @@ class Population(object):
             idx_arr.append(idx - 1)
 
         return idx_arr
+
+    def run(self, inputs, outputs, fitness_callback, verbose=True):
+        start = time()
+
+        # open session and evaluate population
+        best_score = 0
+        with tf.Session() as sess:
+            if verbose: print('evaluating population....')
+            for idx, genome in enumerate(self.genomes):
+                actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: inputs})
+                genome.score = fitness_callback(actions, outputs)
+
+                if genome.score > best_score:
+                    best_score = genome.score
+                    genome.save()
+
+                if verbose:
+                    progress = int((idx + 1)/len(self.genomes) * self.verbose_load_bar)
+                    progress_left = self.verbose_load_bar - progress
+                    print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
+
+        if verbose:
+            if verbose: print(' ' * (self.verbose_load_bar + 3), end='\r')
+            print('average score: {0:.2f}'.format(np.average(np.array([x.score for x in self.genomes]))))
+            print('best score: {0:.2f}'.format(best_score))
+            print('time: {0:.2f}s\n'.format(time() - start))
+
+        tf.reset_default_graph()

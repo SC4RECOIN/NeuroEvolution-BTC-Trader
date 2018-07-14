@@ -1,6 +1,5 @@
 import tensorflow as tf
 import numpy as np
-from time import time
 from sklearn.preprocessing import StandardScaler
 
 from population.population import Population
@@ -52,43 +51,18 @@ if __name__ == '__main__':
     network_params = {
         'network': 'feedforward',
         'input': 2,
-        'hidden': [16, 16, 16],
+        'hidden': [16, 16],
         'output': 2
     }
 
     # build initial population
-    pop = Population(network_params, pop_size, mutation_scale, w_mutation_rate, b_mutation_rate)
-    tf.reset_default_graph()
-    best_genome = pop.genomes[0]
+    pop = Population(network_params,
+                     pop_size,
+                     mutation_scale,
+                     w_mutation_rate,
+                     b_mutation_rate)
 
     # run for set number of generations
     for g in range(generations):
-        start = time()
-        print('{}\ncreating generation {}...'.format('=' * 22, g + 1))
-
-        pop.evolve()
-
-        # open session and evaluate population
-        with tf.Session() as sess:
-            if network_params['network'] is 'recurrent':
-                sess.run(tf.global_variables_initializer())
-
-            print('evaluating population...')
-
-            for genome in pop.genomes:
-                actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: inputs})
-
-                # profit score
-                genome.score = calculate_profit(actions, price_data)
-
-                # save best genome
-                if genome.score > best_genome.score:
-                    best_genome = genome
-                    # genome.save()
-
-        print('average score: {0:.2f}'.format(np.average(np.array([x.score for x in pop.genomes]))))
-        print('best score: {0:.2f}'.format(max([x.score for x in pop.genomes])))
-        print('record score: {0:.2f}'.format(best_genome.score))
-        print('time: {0:.2f}s\n'.format(time() - start))
-
-        tf.reset_default_graph()
+        pop.evolve(g)
+        pop.run(inputs, price_data, fitness_callback=calculate_profit)
