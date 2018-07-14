@@ -40,24 +40,7 @@ def calculate_profit(trades, trade_prices):
 
     return (usd_wallet / starting_cash - 1) * 100
 
-def calculate_acc(predictions, targets):
-    correct = 0
-    for pred, targ in zip(predictions, targets):
-        if np.argmax(pred) == np.argmax(targ): correct += 1
-
-    return correct / len(targets)
-
 if __name__ == '__main__':
-    encoding = {'Iris-setosa' : 0, 'Iris-versicolor' : 1, 'Iris-virginica' : 2}
-
-    X = []; Y = []
-    for line in open('data/Iris.csv'):
-        X.append(line.split(',')[:-1])
-        Y.append(encoding[line.split(',')[-1][:-1]])
-
-    Y = tf.keras.utils.to_categorical(Y)
-    X = np.array(X)
-
     # genetic parameters
     pop_size = 1
     w_mutation_rate = 0.05
@@ -66,12 +49,10 @@ if __name__ == '__main__':
     generations = 1
 
     # network parameters
-    timesteps = 5
     network_params = {
-        'network': 'recurrent',
-        'timesteps': timesteps,
+        'network': 'feedforward',
         'input': 1,
-        'hidden': [16],
+        'hidden': [16, 16, 16],
         'output': 3
     }
 
@@ -85,12 +66,7 @@ if __name__ == '__main__':
         start = time()
         print('{}\ncreating generation {}...'.format('=' * 22, g + 1))
 
-        # pop.evolve()
-
-        # random subset of data, reshape
-        shuffle_index = np.random.permutation(len(Y))
-        X_subset, Y_subset = X[shuffle_index][:int(len(Y)/3)], Y[shuffle_index][:int(len(Y)/3)]
-        X_subset = X_subset.reshape((len(X_subset), timesteps, 1))
+        pop.evolve()
 
         # open session and evaluate population
         with tf.Session() as sess:
