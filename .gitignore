@@ -7,3 +7,6 @@ keys.py
 # do not upload models
 *.dump
 *.h5
+
+# ignore np files
+*.npy
