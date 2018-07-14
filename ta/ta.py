@@ -43,6 +43,14 @@ class TA(object):
 
         plt.show()
 
+    def remove_NaN(self, inputs, outputs):
+        valid_idx = 0
+        for check in np.isnan(inputs):
+            if True in check: valid_idx += 1
+            else: break
+
+        return valid_idx
+
 
 if __name__ == '__main__':
     data = {'open': [32, 33, 19, 25, 29, 37, 38, 35, 32, 38, 42, 49],

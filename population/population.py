@@ -3,7 +3,14 @@ import numpy as np
 
 
 class Population(object):
-    def __init__(self, network_params, pop_size, mutation_scale, w_mutation_rate, b_mutation_rate=0, breeding_ratio=0):
+    def __init__(self,
+                 network_params,
+                 pop_size,
+                 mutation_scale,
+                 w_mutation_rate,
+                 b_mutation_rate=0,
+                 breeding_ratio=0):
+
         self.network_params = network_params
         self.population_size = pop_size
         self.w_mutation_rate = w_mutation_rate
@@ -16,7 +23,10 @@ class Population(object):
     def initial_pop(self):
         genomes = []
         for i in range(self.population_size):
-            genomes.append(Genome(self.network_params, self.mutation_scale, self.w_mutation_rate, self.b_mutation_rate))
+            genomes.append(Genome(self.network_params,
+                                  self.mutation_scale,
+                                  self.w_mutation_rate,
+                                  self.b_mutation_rate))
 
         return genomes
 
@@ -53,13 +63,12 @@ class Population(object):
         # create np array of genome scores
         score_arr = np.array([x.score for x in self.genomes])
 
-        # if there is more than one unique element
+        # normalize scores
         if len(set(score_arr)) != 1:
-            # normalize scores
             score_arr = (score_arr - score_arr.min()) / (score_arr - score_arr.min()).sum()
-        else:
-            # if all the scores were the same
-            score_arr = [1/self.population_size] * self.population_size
+
+        # if all the scores were the same
+        else: score_arr = [1/self.population_size] * self.population_size
 
         # assign fitness
         for fitness, genome in zip(score_arr, self.genomes):

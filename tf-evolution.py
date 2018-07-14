@@ -1,59 +1,59 @@
 import tensorflow as tf
 import numpy as np
 from time import time
-import random
-import os
+from sklearn.preprocessing import StandardScaler
 
 from population.population import Population
 from population.network import Network
-import signal
-import sys
+from data.data_util import BinanceAPI
+from ta.ta import TA
 
 # suppress tf GPU logging
+import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-# catch interupt to kill program
-def signal_handler(signal, frame):
-    print('\nprogram exiting')
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
-
+# for evaluating model fitness
 def calculate_profit(trades, trade_prices):
     btc_wallet = 0.
     starting_cash = 100.
     usd_wallet = starting_cash
     fee = 0.001
 
-    # initially wait for buy signal
     holding = False
-
     for idx, trade in enumerate(trades):
-        if holding:
-            if not np.argmax(trade):
-                holding = False
-                usd_wallet = btc_wallet * trade_prices[idx] * (1 - fee)
-        else:
-            if np.argmax(trade):
-                holding = True
-                btc_wallet = usd_wallet / trade_prices[idx] * (1 - fee)
+        if holding and not np.argmax(trade):
+            holding = False
+            usd_wallet = btc_wallet * trade_prices[idx] * (1 - fee)
+        if not holding and np.argmax(trade):
+            holding = True
+            btc_wallet = usd_wallet / trade_prices[idx] * (1 - fee)
 
     return (usd_wallet / starting_cash - 1) * 100
 
+
 if __name__ == '__main__':
+    # inputs
+    client = BinanceAPI(trading_pair='BTCUSDT')
+    price_data = client.fetch_data(15, start='yesterday', save='data/historical_data.npy')
+    ta = TA(price_data)
+    inputs = np.transpose(np.array([ta.EMA(5).values, ta.DEMA(5).values]))
+    valid_idx = ta.remove_NaN(inputs, price_data)
+    inputs = StandardScaler().fit_transform(inputs[valid_idx:])
+    price_data = price_data['close'][valid_idx:]
+
     # genetic parameters
-    pop_size = 1
+    pop_size = 100
     w_mutation_rate = 0.05
     b_mutation_rate = 0.0
     mutation_scale = 0.3
-    generations = 1
+    generations = 20
 
     # network parameters
     network_params = {
         'network': 'feedforward',
-        'input': 1,
+        'input': 2,
         'hidden': [16, 16, 16],
-        'output': 3
+        'output': 2
     }
 
     # build initial population
@@ -76,11 +76,10 @@ if __name__ == '__main__':
             print('evaluating population...')
 
             for genome in pop.genomes:
-                print("running\n")
-                actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: X_subset})
+                actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: inputs})
 
                 # profit score
-                genome.score = calculate_acc(actions, Y_subset)
+                genome.score = calculate_profit(actions, price_data)
 
                 # save best genome
                 if genome.score > best_genome.score:
