@@ -131,8 +131,8 @@ class Population(object):
 
         if verbose:
             if verbose: print(' ' * (self.verbose_load_bar + 3), end='\r')
-            print('average score: {0:.2f}'.format(np.average(np.array([x.score for x in self.genomes]))))
-            print('best score: {0:.2f}'.format(best_score))
+            print('average score: {0:.2f}%'.format(np.average(np.array([x.score for x in self.genomes]))))
+            print('best score: {0:.2f}%'.format(best_score))
             print('time: {0:.2f}s\n'.format(time() - start))
 
         tf.reset_default_graph()
