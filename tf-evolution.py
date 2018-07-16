@@ -29,16 +29,27 @@ def calculate_profit(trades, trade_prices):
 
     return (usd_wallet / starting_cash - 1) * 100
 
-
-if __name__ == '__main__':
-    # inputs
+def get_data():
     client = BinanceAPI(trading_pair='BTCUSDT')
-    price_data = client.fetch_data(15, start='yesterday', save='data/historical_data.npy')
+    price_data = client.fetch_data(30, save='data/historical_data.npy')
     ta = TA(price_data)
-    inputs = np.transpose(np.array([ta.EMA(5).values, ta.DEMA(5).values]))
+    inputs = np.transpose(np.array([ta.MACD()['histo'].values,
+                                    ta.STOCH()['ratio'].values,
+                                    ta.SAR().values / price_data['close'],
+                                    ta.FISH()['histo'].values,
+                                    ta.BASP(period=25)['ratio'].values,
+                                    ta.VORTEX()['ratio'].values]))
     valid_idx = ta.remove_NaN(inputs, price_data)
     inputs = StandardScaler().fit_transform(inputs[valid_idx:])
     price_data = price_data['close'][valid_idx:]
+
+    return inputs, price_data
+
+
+if __name__ == '__main__':
+    # inputs
+    inputs, price_data = get_data()
+    print('Buy and hold profit: {0:.2f}%'.format((price_data[-1] / price_data[0] - 1) * 100))
 
     # genetic parameters
     pop_size = 100
@@ -50,8 +61,8 @@ if __name__ == '__main__':
     # network parameters
     network_params = {
         'network': 'feedforward',
-        'input': 2,
-        'hidden': [16, 16],
+        'input': inputs.shape[1],
+        'hidden': [16, 16, 16],
         'output': 2
     }
 

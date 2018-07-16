@@ -37,8 +37,9 @@ class TA(object):
         EMA_slow = self.ohlcv[column].ewm(ignore_na=False, min_periods=period_slow - 1, span=period_slow).mean()
         MACD = pd.Series(EMA_fast - EMA_slow, name='macd')
         MACD_signal = pd.Series(MACD.ewm(ignore_na=False, span=signal).mean(), name='signal')
+        MACD_histo = pd.Series(MACD - MACD_signal, name='histo')
 
-        return pd.concat([MACD, MACD_signal], axis=1)
+        return pd.concat([MACD, MACD_signal, MACD_histo], axis=1)
 
     def RSI(self, period=14, column='close'):
         """
@@ -62,18 +63,34 @@ class TA(object):
 
         return ((rsi - rsi.min()) / (rsi.max() - rsi.min())).rolling(window=stoch_period).mean()
 
+    def STOCH(self, period=14, d_period=3, column='close'):
+        """
+        Stochastic Oscillator
+        """
+        highest_high = self.ohlcv['high'].rolling(center=False, window=period).max()
+        lowest_low = self.ohlcv['low'].rolling(center=False, window=period).min()
+
+        stoch_k = pd.Series((highest_high - self.ohlcv['close']) / (highest_high - lowest_low), name='stoch_k') * 100
+        stoch_d = pd.Series(stoch_k.rolling(center=False, window=period, min_periods=period - 1).mean(), name='stoch_d')
+        ratio = pd.Series(stoch_k - stoch_d, name='ratio')
+
+        return pd.concat([stoch_k, stoch_d, ratio], axis=1)
+
     def FISH(self, period=10):
         """
         Fisher Transform
         """
         med = (self.ohlcv['high'] + self.ohlcv['low']) / 2
-        ndaylow = med.rolling(window=period).min()
-        ndayhigh = med.rolling(window=period).max()
-        raw = (2 * ((med - ndaylow) / (ndayhigh - ndaylow))) - 1
+        low = med.rolling(window=period).min()
+        high = med.rolling(window=period).max()
+        raw = (2 * ((med - low) / (high - low))) - 1
         smooth = raw.ewm(span=5).mean()
 
-        return pd.Series((np.log((1 + smooth) / (1 - smooth))).ewm(span=3).mean(),
-                          name='{0} period FISH.'.format(period))
+        fisher = pd.Series((np.log((1 + smooth) / (1 - smooth))).ewm(span=3).mean(), name='fisher')
+        trigger = pd.Series(np.concatenate([[np.nan], fisher[:-1]]), name='trigger')
+        histo = pd.Series(fisher - trigger, name='histo')
+
+        return pd.concat([fisher, trigger, histo], axis=1)
 
     def SAR(self, acceleration_factor=0.02, acc_max=0.2):
         """
@@ -112,7 +129,7 @@ class TA(object):
 
             sar.append(sari)
 
-        return sar
+        return pd.Series(sar, name='sar')
 
     def TR(self):
         """
@@ -133,13 +150,16 @@ class TA(object):
         VMP = pd.Series(self.ohlcv['high'] - self.ohlcv['low'].shift(-1).abs())
         VMM = pd.Series(self.ohlcv['low'] - self.ohlcv['high'].shift(-1).abs())
 
-        VMPx = VMP.rolling(window=period).sum().tail(period)
-        VMMx = VMM.rolling(window=period).sum().tail(period)
+        VMPx = VMP.rolling(window=period).sum()
+        VMMx = VMM.rolling(window=period).sum()
 
         VIp = pd.Series(VMPx / self.TR(), name='VI+').interpolate(method='index')
         VIm = pd.Series(VMMx / self.TR(), name='VI-').interpolate(method='index')
+        pm_ratio = pd.Series(VIp - VIm, name='ratio')
 
-        return pd.concat([VIm, VIp], axis=1)
+        pm_ratio[pm_ratio == np.inf] = 0
+
+        return pd.concat([VIm, VIp, pm_ratio], axis=1)
 
     def BASP(self, period=40):
         """
@@ -153,10 +173,11 @@ class TA(object):
         v_avg = self.ohlcv['volume'].ewm(span=period, min_periods=period - 1).mean()
         nv = self.ohlcv['volume'] / v_avg
 
-        buy_press = pd.Series(bp / bp_avg * nv, name='Buy')
-        sell_press = pd.Series(sp / sp_avg * nv, name='Sell')
+        buy_press = pd.Series(bp / bp_avg * nv, name='buy')
+        sell_press = pd.Series(sp / sp_avg * nv, name='sell')
+        press_ratio = pd.Series(buy_press - sell_press, name='ratio')
 
-        return pd.concat([buy_press, sell_press], axis=1)
+        return pd.concat([buy_press, sell_press, press_ratio], axis=1)
 
     def graph(self,
               include_open=False,
