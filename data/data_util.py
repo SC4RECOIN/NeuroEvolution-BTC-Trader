@@ -7,11 +7,11 @@ except:
 
 class BinanceAPI(object):
     def __init__(self, trading_pair='BTCUSDT'):
-        self.intervals = {240: '4h', 60: '1h', 15: '15m', 5: '5m'}
+        self.intervals = {240: '4h', 60: '1h', 30: '30m', 15: '15m', 5: '5m'}
         self.trading_pair = trading_pair
 
         # any valid dateparser format
-        self.start = '08/17/2017'
+        self.start = '08/18/2017'
         self.end = 'today'
 
         # connect to API
