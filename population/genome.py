@@ -95,9 +95,9 @@ class Genome(object):
 
         # should assign designated biases as well
 
-    def save(self):
+    def save(self, save_folder='model/'):
         for i, layers in enumerate(self.weights):
-            np.save('model/weights{}'.format(i), layers)
+            np.save(save_folder + 'weights{}'.format(i), layers)
 
         for i, layers in enumerate(self.biases):
-            np.save('model/biases{}'.format(i), layers)
+            np.save(save_folder + 'biases{}'.format(i), layers)
