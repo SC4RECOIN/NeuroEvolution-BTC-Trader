@@ -29,7 +29,7 @@ def calculate_profit(trades, trade_prices):
 
     return (usd_wallet / starting_cash - 1) * 100
 
-def get_data():
+def get_data(test_size):
     client = BinanceAPI(trading_pair='BTCUSDT')
     price_data = client.fetch_data(30, save='data/historical_data.npy')
     ta = TA(price_data)
@@ -43,13 +43,17 @@ def get_data():
     inputs = StandardScaler().fit_transform(inputs[valid_idx:])
     price_data = price_data['close'][valid_idx:]
 
-    return inputs, price_data
+    # create test set
+    test_idx = int(len(price_data) *  (1 - test_size))
+
+    return inputs[:test_idx], inputs[test_idx:], price_data[:test_idx], price_data[test_idx:]
 
 
 if __name__ == '__main__':
     # inputs
-    inputs, price_data = get_data()
-    print('Buy and hold profit: {0:.2f}%'.format((price_data[-1] / price_data[0] - 1) * 100))
+    inputs_train, inputs_test, price_train, price_test = get_data(test_size=0.2)
+    print('Buy and hold profit: {0:.2f}%'.format((price_train[-1] / price_train[0] - 1) * 100))
+    print('Buy and hold profit (test): {0:.2f}%'.format((price_test[-1] / price_test[0] - 1) * 100))
 
     # genetic parameters
     pop_size = 100
@@ -61,7 +65,7 @@ if __name__ == '__main__':
     # network parameters
     network_params = {
         'network': 'feedforward',
-        'input': inputs.shape[1],
+        'input': inputs_train.shape[1],
         'hidden': [16, 16, 16],
         'output': 2
     }
@@ -76,4 +80,6 @@ if __name__ == '__main__':
     # run for set number of generations
     for g in range(generations):
         pop.evolve(g)
-        pop.run(inputs, price_data, fitness_callback=calculate_profit)
+        gen_best = pop.run(inputs_train, price_train, fitness_callback=calculate_profit)
+        gen_best.save()
+        pop.test(inputs_test, price_test, fitness_callback=calculate_profit)

@@ -1,4 +1,5 @@
 from population.genome import Genome
+from population.network import Network
 from time import time
 import numpy as np
 import tensorflow as tf
@@ -21,6 +22,8 @@ class Population(object):
         self.breeding_ratio = breeding_ratio
 
         self.genomes = self.initial_pop()
+        self.overall_best = self.genomes[0]
+        self.gen_best = self.genomes[0]
 
         self.verbose_load_bar = 25
 
@@ -113,26 +116,35 @@ class Population(object):
         start = time()
 
         # open session and evaluate population
-        best_score = 0
         with tf.Session() as sess:
             if verbose: print('evaluating population....')
             for idx, genome in enumerate(self.genomes):
                 actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: inputs})
                 genome.score = fitness_callback(actions, outputs)
 
-                if genome.score > best_score:
-                    best_score = genome.score
-                    genome.save()
-
                 if verbose:
                     progress = int((idx + 1)/len(self.genomes) * self.verbose_load_bar)
                     progress_left = self.verbose_load_bar - progress
                     print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
 
+        self.gen_best = self.genomes[np.argmax([x.score for x in self.genomes])]
+        if self.gen_best.score > self.overall_best.score: self.overall_best = self.gen_best
+
         if verbose:
             if verbose: print(' ' * (self.verbose_load_bar + 3), end='\r')
             print('average score: {0:.2f}%'.format(np.average(np.array([x.score for x in self.genomes]))))
-            print('best score: {0:.2f}%'.format(best_score))
-            print('time: {0:.2f}s\n'.format(time() - start))
+            print('best score: {0:.2f}%'.format(max([x.score for x in self.genomes])))
+            print('record score: {0:.2f}%'.format(self.overall_best.score))
+            print('time: {0:.2f}s'.format(time() - start))
+
+        tf.reset_default_graph()
+
+        return self.gen_best
+
+    def test(self, inputs, outputs, fitness_callback, to_test='gen_best'):
+        model = Network(self.gen_best)
+        with tf.Session() as sess:
+            actions = sess.run(model.prediction, feed_dict={model.X: inputs})
+            print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
 
         tf.reset_default_graph()
