@@ -41,6 +41,22 @@ class TA(object):
 
         return pd.concat([MACD, MACD_signal, MACD_histo], axis=1)
 
+    def PPO(self, period_fast=12, period_slow=26, signal=9, column='close'):
+        """
+        PPO, PPO Signal and PPO difference.
+        As with MACD, the PPO reflects the convergence and divergence of two moving averages.
+        While MACD measures the absolute difference between two moving averages, PPO makes this a relative value by dividing the difference by the slower moving average
+        """
+
+        EMA_fast = self.ohlcv[column].ewm(ignore_na=False, min_periods=period_slow - 1, span=period_fast).mean()
+        EMA_slow = self.ohlcv[column].ewm(ignore_na=False, min_periods=period_slow - 1, span=period_slow).mean()
+
+        PPO = pd.Series(((EMA_fast - EMA_slow)/EMA_slow) * 100, name='ppo')
+        PPO_signal = pd.Series(PPO.ewm(ignore_na=False, span=signal).mean(), name='signal')
+        PPO_histo = pd.Series(PPO - PPO_signal, name='histo')
+
+        return pd.concat([PPO, PPO_signal, PPO_histo], axis=1)
+
     def RSI(self, period=14, column='close'):
         """
         Relative Strength Index
@@ -155,7 +171,7 @@ class TA(object):
 
         VIp = pd.Series(VMPx / self.TR(), name='VI+').interpolate(method='index')
         VIm = pd.Series(VMMx / self.TR(), name='VI-').interpolate(method='index')
-        pm_ratio = pd.Series(VIp - VIm, name='ratio')
+        pm_ratio = pd.Series(VIp + VIm, name='ratio')
 
         # remove inf values
         pm_ratio[pm_ratio == np.inf] = 0
