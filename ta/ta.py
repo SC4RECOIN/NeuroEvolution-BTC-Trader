@@ -173,8 +173,8 @@ class TA(object):
         VIm = pd.Series(VMMx / self.TR(), name='VI-').interpolate(method='index')
         pm_ratio = pd.Series(VIp + VIm, name='ratio')
 
-        # remove inf values
-        pm_ratio[pm_ratio == np.inf] = 0
+        # remove bad values
+        pm_ratio[np.isnan(pm_ratio)] = 0
 
         return pd.concat([VIm, VIp, pm_ratio], axis=1)
 
