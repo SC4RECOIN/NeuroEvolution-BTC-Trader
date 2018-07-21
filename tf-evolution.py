@@ -65,6 +65,7 @@ if __name__ == '__main__':
     w_mutation_rate = 0.05
     b_mutation_rate = 0.0
     mutation_scale = 0.3
+    mutation_decay = 0.999
     generations = 1000
 
     # network parameters
@@ -80,7 +81,8 @@ if __name__ == '__main__':
                      pop_size,
                      mutation_scale,
                      w_mutation_rate,
-                     b_mutation_rate)
+                     b_mutation_rate,
+                     mutation_decay)
 
     # run for set number of generations
     for g in range(generations):

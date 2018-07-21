@@ -12,6 +12,7 @@ class Population(object):
                  mutation_scale,
                  w_mutation_rate,
                  b_mutation_rate=0,
+                 mutation_decay=None,
                  breeding_ratio=0):
 
         self.network_params = network_params
@@ -19,6 +20,7 @@ class Population(object):
         self.w_mutation_rate = w_mutation_rate
         self.b_mutation_rate = b_mutation_rate
         self.mutation_scale = mutation_scale
+        self.mutation_decay = mutation_decay
         self.breeding_ratio = breeding_ratio
 
         self.genomes = self.initial_pop()
@@ -74,6 +76,10 @@ class Population(object):
 
         if verbose: print(' ' * (self.verbose_load_bar + 3), end='\r')
         self.genomes = children
+
+        # mutation scale will decay over time
+        if self.mutation_decay is not None:
+            self.mutation_scale *= mutation_decay
 
     def normalize_score(self):
         # create np array of genome scores
