@@ -79,7 +79,7 @@ class Population(object):
 
         # mutation scale will decay over time
         if self.mutation_decay is not None:
-            self.mutation_scale *= mutation_decay
+            self.mutation_scale *= self.mutation_decay
 
     def normalize_score(self):
         # create np array of genome scores
