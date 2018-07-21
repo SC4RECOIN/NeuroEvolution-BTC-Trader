@@ -33,18 +33,21 @@ def get_data(test_size):
     client = BinanceAPI(trading_pair='BTCUSDT')
     price_data = client.fetch_data(30, save='data/historical_data.npy')
     ta = TA(price_data)
-    inputs = np.transpose(np.array([ta.MACD()['histo'].values,
+    inputs = np.transpose(np.array([ta.PPO()['histo'].values,
                                     ta.STOCH()['ratio'].values,
                                     ta.SAR().values / price_data['close'],
                                     ta.FISH()['histo'].values,
                                     ta.BASP(period=25)['ratio'].values,
                                     ta.VORTEX()['ratio'].values]))
     valid_idx = ta.remove_NaN(inputs, price_data)
-    inputs = StandardScaler().fit_transform(inputs[valid_idx:])
-    price_data = price_data['close'][valid_idx:]
+    inputs, price_data = inputs[valid_idx:], price_data['close'][valid_idx:]
 
-    # create test set
+    # test set
     test_idx = int(len(price_data) *  (1 - test_size))
+
+    scaler = StandardScaler()
+    scaler.fit(inputs[:test_idx])
+    inputs = scaler.transform(inputs)
 
     return inputs[:test_idx], inputs[test_idx:], price_data[:test_idx], price_data[test_idx:]
 
