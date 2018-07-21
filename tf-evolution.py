@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from sklearn.externals import joblib
 
 from population.population import Population
 from population.network import Network
@@ -48,6 +49,7 @@ def get_data(test_size):
     scaler = StandardScaler()
     scaler.fit(inputs[:test_idx])
     inputs = scaler.transform(inputs)
+    joblib.dump(scaler, 'model/scaler.pkl')
 
     return inputs[:test_idx], inputs[test_idx:], price_data[:test_idx], price_data[test_idx:]
 
@@ -59,11 +61,11 @@ if __name__ == '__main__':
     print('Buy and hold profit (test): {0:.2f}%'.format((price_test[-1] / price_test[0] - 1) * 100))
 
     # genetic parameters
-    pop_size = 100
+    pop_size = 250
     w_mutation_rate = 0.05
     b_mutation_rate = 0.0
     mutation_scale = 0.3
-    generations = 20
+    generations = 1000
 
     # network parameters
     network_params = {
