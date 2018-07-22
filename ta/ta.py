@@ -43,11 +43,8 @@ class TA(object):
 
     def PPO(self, period_fast=12, period_slow=26, signal=9, column='close'):
         """
-        PPO, PPO Signal and PPO difference.
-        As with MACD, the PPO reflects the convergence and divergence of two moving averages.
-        While MACD measures the absolute difference between two moving averages, PPO makes this a relative value by dividing the difference by the slower moving average
+        PPO
         """
-
         EMA_fast = self.ohlcv[column].ewm(ignore_na=False, min_periods=period_slow - 1, span=period_fast).mean()
         EMA_slow = self.ohlcv[column].ewm(ignore_na=False, min_periods=period_slow - 1, span=period_slow).mean()
 
@@ -216,7 +213,7 @@ class TA(object):
 
         plt.show()
 
-    def remove_NaN(self, inputs, outputs):
+    def remove_NaN(self, inputs):
         valid_idx = 0
         for check in np.isnan(inputs):
             if True in check: valid_idx += 1
