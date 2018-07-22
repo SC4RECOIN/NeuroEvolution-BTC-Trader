@@ -7,6 +7,13 @@ keys.py
 # do not upload models
 *.dump
 *.h5
+*.pkl
 
 # ignore np files
 *.npy
+
+# live trading
+trade.py
+
+# not my class
+binance_helper.py
