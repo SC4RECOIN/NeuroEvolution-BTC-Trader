@@ -1,10 +1,13 @@
 import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Flatten
 import numpy as np
 import os
 
 
 class Network(object):
-    def __init__(self, params=None, load_path=None):
+    def __init__(self, id, params=None, load_path=None):
+        self.id = id
         self.X = None
         self.Y = None
         self.weights, self.biases = [], []
@@ -31,6 +34,8 @@ class Network(object):
                 self.prediction = self.feedforward()
             elif params.network == 'recurrent':
                 raise AttributeError('recurrent networks not yet available')
+            elif params.network == 'convolutional':
+                self.prediction = self.convolutional(params.inputs, params.outputs)
             else:
                 raise AttributeError(params.network, ' is not a valid network type')
 
@@ -48,6 +53,37 @@ class Network(object):
         layer = tf.add(tf.matmul(layer, self.weights[-1]), self.biases[-1])
 
         return tf.nn.softmax(layer)
+
+    def convolutional(self, num_inputs, num_outputs):
+        filters_1 = 16
+        filters_2 = 32
+        dense_h = 32
+        kernel_size = 3
+
+        model = Sequential()
+        model.add(Conv1D(filters_1,
+                         kernel_size,
+                         padding='same',  # vs valid?
+                         activation='relu',
+                         input_shape=(num_inputs, 1)))
+
+        model.add(MaxPooling1D(pool_size=2))
+
+        model.add(Conv1D(filters_2,
+                         kernel_size,
+                         activation='relu',
+                         padding='same'))
+
+        model.add(MaxPooling1D(pool_size=2))
+        # model.add(GlobalMaxPooling1D())
+
+        model.add(Flatten())
+        model.add(Dense(dense_h, activation='relu'))
+        model.add(Dense(num_outputs, activation='softmax'))
+
+        model.compile(loss='mse', optimizer='adam')
+
+        return model
 
     def infer_network(self, load_dir):
         layers = []

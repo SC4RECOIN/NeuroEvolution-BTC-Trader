@@ -32,7 +32,8 @@ class Population(object):
     def initial_pop(self):
         genomes = []
         for i in range(self.population_size):
-            genomes.append(Genome(self.network_params,
+            genomes.append(Genome(i,
+                                  self.network_params,
                                   self.mutation_scale,
                                   self.w_mutation_rate,
                                   self.b_mutation_rate))
@@ -40,6 +41,10 @@ class Population(object):
         return genomes
 
     def evolve(self, g, verbose=True):
+        # genisis population
+        if g == 0:
+            return
+
         if verbose:
             print('{0}\ncreating population {1}'.format('='*self.verbose_load_bar, g+1))
 
@@ -55,7 +60,8 @@ class Population(object):
         for idx, (p1, p2) in enumerate(zip(parents_1, parents_2)):
             if np.random.random() < self.breeding_ratio:
                 # breeding
-                children.append(Genome(self.network_params,
+                children.append(Genome(idx,
+                                       self.network_params,
                                        self.mutation_scale,
                                        self.w_mutation_rate,
                                        self.b_mutation_rate,
@@ -63,7 +69,8 @@ class Population(object):
                                        parent_2=self.genomes[p2]))
             else:
                 # mutating
-                children.append(Genome(self.network_params,
+                children.append(Genome(idx,
+                                       self.network_params,
                                        self.mutation_scale,
                                        self.w_mutation_rate,
                                        self.b_mutation_rate,
@@ -121,18 +128,30 @@ class Population(object):
     def run(self, inputs, outputs, fitness_callback, verbose=True):
         start = time()
 
-        # open session and evaluate population
-        with tf.Session() as sess:
+        # built using tf.keras
+        if self.network_params['network'] == 'convolutional':
             if verbose: print('evaluating population....')
+
+            # add extra dimension for conv1D channel
+            inputs = inputs[:,:, np.newaxis]
+
             for idx, genome in enumerate(self.genomes):
-                actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: inputs})
+                actions = genome.model.prediction.predict(inputs)
                 genome.score = fitness_callback(actions, outputs)
+                if verbose: self.print_progress(idx)
 
-                if verbose:
-                    progress = int((idx + 1)/len(self.genomes) * self.verbose_load_bar)
-                    progress_left = self.verbose_load_bar - progress
-                    print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
+        else:
+            # open session and evaluate population
+            with tf.Session() as sess:
+                if verbose: print('evaluating population....')
+                for idx, genome in enumerate(self.genomes):
+                    actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: inputs})
+                    genome.score = fitness_callback(actions, outputs)
+                    if verbose: self.print_progress(idx)
 
+            tf.reset_default_graph()
+
+        # evaluate best model in generation and overall
         self.gen_best = self.genomes[np.argmax([x.score for x in self.genomes])]
         if self.gen_best.score > self.overall_best.score: self.overall_best = self.gen_best
 
@@ -143,8 +162,6 @@ class Population(object):
             print('record score: {0:.2f}%'.format(self.overall_best.score))
             print('time: {0:.2f}s'.format(time() - start))
 
-        tf.reset_default_graph()
-
         return self.gen_best
 
     def test(self, inputs, outputs, fitness_callback, to_test='gen_best'):
@@ -154,3 +171,8 @@ class Population(object):
             print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
 
         tf.reset_default_graph()
+
+    def print_progress(self, progress):
+        progress = int((progress + 1)/len(self.genomes) * self.verbose_load_bar)
+        progress_left = self.verbose_load_bar - progress
+        print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')

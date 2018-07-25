@@ -4,10 +4,11 @@ import copy
 
 
 class Genome(object):
-    def __init__(self, network_params,  mutation_scale, w_mutation_rate, b_mutation_rate, parent_1=None, parent_2=None):
+    def __init__(self, id, network_params,  mutation_scale, w_mutation_rate, b_mutation_rate, parent_1=None, parent_2=None):
         # fitness is score normalized
         self.fitness = 0
         self.score = 0
+        self.id = id
 
         # keep track of how genome came to be
         self.mutated = False
@@ -50,7 +51,7 @@ class Genome(object):
         else: self.init_w_b()
 
         # pass genome to network object
-        self.model = Network(self)
+        self.model = Network(self.id, self)
 
     def init_w_b(self):
         # create weights and bias for first hidden layer

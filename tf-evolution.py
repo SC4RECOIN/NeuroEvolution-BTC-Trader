@@ -40,7 +40,7 @@ def get_data(test_size):
                                     ta.FISH()['histo'].values,
                                     ta.BASP(period=25)['ratio'].values,
                                     ta.VORTEX()['ratio'].values]))
-    valid_idx = ta.remove_NaN(inputs, price_data)
+    valid_idx = ta.remove_NaN(inputs)
     inputs, price_data = inputs[valid_idx:], price_data['close'][valid_idx:]
 
     # test set
@@ -61,18 +61,18 @@ if __name__ == '__main__':
     print('Buy and hold profit (test): {0:.2f}%'.format((price_test[-1] / price_test[0] - 1) * 100))
 
     # genetic parameters
-    pop_size = 250
+    pop_size = 10
     w_mutation_rate = 0.05
     b_mutation_rate = 0.0
     mutation_scale = 0.3
     mutation_decay = 0.999
-    generations = 1000
+    generations = 3
 
     # network parameters
     network_params = {
-        'network': 'feedforward',
+        'network': 'convolutional',
         'input': inputs_train.shape[1],
-        'hidden': [16, 16, 16],
+        'hidden': [16, 16, 16],             # ignored on cnn right now
         'output': 2
     }
 
@@ -88,5 +88,5 @@ if __name__ == '__main__':
     for g in range(generations):
         pop.evolve(g)
         gen_best = pop.run(inputs_train, price_train, fitness_callback=calculate_profit)
-        gen_best.save()
-        pop.test(inputs_test, price_test, fitness_callback=calculate_profit)
+        # gen_best.save()
+        # pop.test(inputs_test, price_test, fitness_callback=calculate_profit)
