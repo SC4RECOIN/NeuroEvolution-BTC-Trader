@@ -82,6 +82,11 @@ class Population(object):
                                        self.w_mutation_rate,
                                        self.b_mutation_rate,
                                        load_keras=loaded))
+                if self.verbose:
+                    progress = int((idx + 1)/len(parents_1) * self.verbose_load_bar)
+                    progress_left = self.verbose_load_bar - progress
+                    print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
+
         else:
             # create next generation
             for idx, (p1, p2) in enumerate(zip(parents_1, parents_2)):

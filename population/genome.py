@@ -65,7 +65,7 @@ class Genome(object):
         else: self.init_w_b()
 
         # pass genome to network object
-        self.model = Network(self.id, self)
+        if load_keras is None: self.model = Network(self.id, self)
 
     def init_w_b(self):
         # create weights and bias for first hidden layer
