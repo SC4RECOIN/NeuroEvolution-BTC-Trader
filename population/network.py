@@ -6,7 +6,7 @@ import os
 
 
 class Network(object):
-    def __init__(self, id, params=None, load_path=None):
+    def __init__(self, id, params=None, load_path=None, load_keras=None):
         self.id = id
         self.X = None
         self.Y = None
@@ -21,23 +21,29 @@ class Network(object):
 
         # creating network from config params
         if params is not None:
-            self.X = tf.placeholder("float", [None, params.inputs])
-            self.Y = tf.placeholder("float", [None, params.outputs])
-
-            # apply weights and biases
-            for w, b in zip(params.weights, params.biases):
-                self.weights.append(tf.constant(w))
-                self.biases.append(tf.constant(b))
 
             # network type
             if params.network == 'feedforward':
+                self.X = tf.placeholder("float", [None, params.inputs])
+                self.Y = tf.placeholder("float", [None, params.outputs])
+
+                # apply weights and biases
+                for w, b in zip(params.weights, params.biases):
+                    self.weights.append(tf.constant(w))
+                    self.biases.append(tf.constant(b))
+
                 self.prediction = self.feedforward()
+
             elif params.network == 'recurrent':
                 raise AttributeError('recurrent networks not yet available')
+
             elif params.network == 'convolutional':
-                self.prediction = self.convolutional(params.inputs, params.outputs)
-            else:
-                raise AttributeError(params.network, ' is not a valid network type')
+                if load_keras is None:
+                    self.prediction = self.convolutional(params.inputs, params.outputs)
+                else:
+                    self.prediction = load_keras
+
+            else: raise AttributeError(params.network, ' is not a valid network type')
 
         # loading network from saved weights
         if load_path is not None:

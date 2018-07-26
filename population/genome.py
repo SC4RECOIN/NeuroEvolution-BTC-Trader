@@ -4,7 +4,16 @@ import copy
 
 
 class Genome(object):
-    def __init__(self, id, network_params,  mutation_scale, w_mutation_rate, b_mutation_rate, parent_1=None, parent_2=None):
+    def __init__(self,
+                 id,
+                 network_params,
+                 mutation_scale,
+                 w_mutation_rate,
+                 b_mutation_rate,
+                 parent_1=None,
+                 parent_2=None,
+                 load_keras=None):
+
         # fitness is score normalized
         self.fitness = 0
         self.score = 0
@@ -18,6 +27,7 @@ class Genome(object):
         self.hidden = network_params['hidden']
         self.outputs = network_params['output']
         self.network = network_params['network']
+        self.model = None
         self.timesteps = None
 
         try:
@@ -46,6 +56,10 @@ class Genome(object):
             self.mutate_w()
             self.mutate_b()
             self.mutated = True
+
+        elif load_keras is not None:
+            self.model = Network(self.id, self, load_keras=load_keras)
+            # mutate
 
         # initial values when population is first created
         else: self.init_w_b()

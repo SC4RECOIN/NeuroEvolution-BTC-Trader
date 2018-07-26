@@ -1,5 +1,6 @@
 from population.genome import Genome
 from population.network import Network
+from tensorflow.keras.models import load_model, model_from_json
 from time import time
 import numpy as np
 import tensorflow as tf
@@ -12,8 +13,9 @@ class Population(object):
                  mutation_scale,
                  w_mutation_rate,
                  b_mutation_rate=0,
-                 mutation_decay=None,
-                 breeding_ratio=0):
+                 mutation_decay=1.0,
+                 breeding_ratio=0,
+                 verbose=True):
 
         self.network_params = network_params
         self.population_size = pop_size
@@ -23,13 +25,17 @@ class Population(object):
         self.mutation_decay = mutation_decay
         self.breeding_ratio = breeding_ratio
 
+        self.verbose_load_bar = 25
+        self.verbose = verbose
+
         self.genomes = self.initial_pop()
         self.overall_best = self.genomes[0]
         self.gen_best = self.genomes[0]
 
-        self.verbose_load_bar = 25
-
     def initial_pop(self):
+        if self.verbose:
+            print('{0}\ncreating genisis population'.format('='*self.verbose_load_bar))
+
         genomes = []
         for i in range(self.population_size):
             genomes.append(Genome(i,
@@ -40,12 +46,12 @@ class Population(object):
 
         return genomes
 
-    def evolve(self, g, verbose=True):
+    def evolve(self, g):
         # genisis population
         if g == 0:
             return
 
-        if verbose:
+        if self.verbose:
             print('{0}\ncreating population {1}'.format('='*self.verbose_load_bar, g+1))
 
         # find fitness by normalizing score
@@ -56,37 +62,57 @@ class Population(object):
         parents_2 = self.pool_selection()
         children = []
 
-        # create next generation
-        for idx, (p1, p2) in enumerate(zip(parents_1, parents_2)):
-            if np.random.random() < self.breeding_ratio:
-                # breeding
+        # evolving keras network
+        if self.network_params['network'] == 'convolutional':
+            # temporarily save models and clear session
+            configs, weights = [], []
+            for p1 in parents_1:
+                configs.append(self.genomes[p1].model.prediction.to_json())
+                weights.append(self.genomes[p1].model.prediction.get_weights())
+
+            tf.keras.backend.clear_session()
+
+            # reload models
+            for idx, (config, weight) in enumerate(zip(configs, weights)):
+                loaded = model_from_json(config)
+                loaded.set_weights(weight)
                 children.append(Genome(idx,
                                        self.network_params,
                                        self.mutation_scale,
                                        self.w_mutation_rate,
                                        self.b_mutation_rate,
-                                       parent_1=self.genomes[p1],
-                                       parent_2=self.genomes[p2]))
-            else:
-                # mutating
-                children.append(Genome(idx,
-                                       self.network_params,
-                                       self.mutation_scale,
-                                       self.w_mutation_rate,
-                                       self.b_mutation_rate,
-                                       parent_1=self.genomes[p1]))
+                                       load_keras=loaded))
+        else:
+            # create next generation
+            for idx, (p1, p2) in enumerate(zip(parents_1, parents_2)):
+                if np.random.random() < self.breeding_ratio:
+                    # breeding
+                    children.append(Genome(idx,
+                                           self.network_params,
+                                           self.mutation_scale,
+                                           self.w_mutation_rate,
+                                           self.b_mutation_rate,
+                                           parent_1=self.genomes[p1],
+                                           parent_2=self.genomes[p2]))
+                else:
+                    # mutating
+                    children.append(Genome(idx,
+                                           self.network_params,
+                                           self.mutation_scale,
+                                           self.w_mutation_rate,
+                                           self.b_mutation_rate,
+                                           parent_1=self.genomes[p1]))
 
-            if verbose:
-                progress = int((idx + 1)/len(parents_1) * self.verbose_load_bar)
-                progress_left = self.verbose_load_bar - progress
-                print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
+                if self.verbose:
+                    progress = int((idx + 1)/len(parents_1) * self.verbose_load_bar)
+                    progress_left = self.verbose_load_bar - progress
+                    print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
 
-        if verbose: print(' ' * (self.verbose_load_bar + 3), end='\r')
+        if self.verbose: print(' ' * (self.verbose_load_bar + 3), end='\r')
         self.genomes = children
 
         # mutation scale will decay over time
-        if self.mutation_decay is not None:
-            self.mutation_scale *= self.mutation_decay
+        self.mutation_scale *= self.mutation_decay
 
     def normalize_score(self):
         # create np array of genome scores
@@ -125,12 +151,12 @@ class Population(object):
 
         return idx_arr
 
-    def run(self, inputs, outputs, fitness_callback, verbose=True):
+    def run(self, inputs, outputs, fitness_callback):
         start = time()
 
         # built using tf.keras
         if self.network_params['network'] == 'convolutional':
-            if verbose: print('evaluating population....')
+            if self.verbose: print('evaluating population....')
 
             # add extra dimension for conv1D channel
             inputs = inputs[:,:, np.newaxis]
@@ -138,16 +164,16 @@ class Population(object):
             for idx, genome in enumerate(self.genomes):
                 actions = genome.model.prediction.predict(inputs)
                 genome.score = fitness_callback(actions, outputs)
-                if verbose: self.print_progress(idx)
+                if self.verbose: self.print_progress(idx)
 
         else:
             # open session and evaluate population
             with tf.Session() as sess:
-                if verbose: print('evaluating population....')
+                if self.verbose: print('evaluating population....')
                 for idx, genome in enumerate(self.genomes):
                     actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: inputs})
                     genome.score = fitness_callback(actions, outputs)
-                    if verbose: self.print_progress(idx)
+                    if self.verbose: self.print_progress(idx)
 
             tf.reset_default_graph()
 
@@ -155,8 +181,8 @@ class Population(object):
         self.gen_best = self.genomes[np.argmax([x.score for x in self.genomes])]
         if self.gen_best.score > self.overall_best.score: self.overall_best = self.gen_best
 
-        if verbose:
-            if verbose: print(' ' * (self.verbose_load_bar + 3), end='\r')
+        if self.verbose:
+            print(' ' * (self.verbose_load_bar + 3), end='\r')
             print('average score: {0:.2f}%'.format(np.average(np.array([x.score for x in self.genomes]))))
             print('best score: {0:.2f}%'.format(max([x.score for x in self.genomes])))
             print('record score: {0:.2f}%'.format(self.overall_best.score))
