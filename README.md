@@ -4,7 +4,7 @@ Tensorflow is used to build a population of models that breed and mutate iterati
 ---   
 
 ## Usage   
-Using the trading framework is very easy. All you need to do is specify the mutation rate, mutation scale, and network parameters. This is passed into the _Population()_ object which constructs a population with the given the parameters. In _pop.evolve()_ the fitness of each model is used in a pooling algorithm to decide which models to use in the next generation. The models are then copied over to the next generation and randomly mutated based on the _w_mutation_rate_ parameter. In _pop.run()_ the models are fed inputs and the fitness is assigned based on how it performs in the fitness callback. The best model is saved and tested and the whole process starts over again until the desired amount of generations is achieved.
+Using the trading framework is very easy. All you need to do is specify the mutation rate, mutation scale, and network parameters. This is passed into the _Population()_ object which constructs a population with the given parameters. In _pop.evolve()_ the fitness of each model is used in a pooling algorithm to decide which models to use in the next generation. The models are then copied over to the next generation and randomly mutated based on the _w_mutation_rate_ parameter. In _pop.run()_ the models are fed inputs and the fitness is assigned based on how it performs in the fitness callback. The best model is saved and tested and the whole process starts over again until the desired amount of generations is achieved.
 ```python
 # genetic parameters
 pop_size = 25
@@ -42,13 +42,34 @@ for g in range(generations):
 - mutation_decay=1.0: This is the rate at which the mutation scale decays at after each generation
 - breeding_ratio=0: Each generation is created through mutation by default. However, you can choose to breed models instead
 - verbose=True: Printing progress to console.
-     
+
 ### Network types
 - feedforward   
 - convolutional (experimental)   
 - recurrent (to be implemented)   
 Feedforward network types are far faster than the other networks. This is because the models are smaller and they are built differently. The model is constructed using matrix multiplication rather than _tf.layers_ or _tf.keras_. Future versions of the framework will involve speeding up the other networks in this manner.
 
+### Fitness callback   
+A callback function needs to be passed into _pop.run()_ so it can know how to evaluate the network. In a trading environment this is usually the profit the model made.   
+```python
+def calculate_profit(trades, trade_prices):
+    btc_wallet = 0.
+    starting_cash = 100.
+    usd_wallet = starting_cash
+    fee = 0.001
+
+    holding = False
+    for idx, trade in enumerate(trades):
+        if holding and not np.argmax(trade):
+            holding = False
+            usd_wallet = btc_wallet * trade_prices[idx] * (1 - fee)
+        if not holding and np.argmax(trade):
+            holding = True
+            btc_wallet = usd_wallet / trade_prices[idx] * (1 - fee)
+
+    return (usd_wallet / starting_cash - 1) * 100
+```
+However, this can be whatever you want
 ---   
 
 ### Sample verbose output
