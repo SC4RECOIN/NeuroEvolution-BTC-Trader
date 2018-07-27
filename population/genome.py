@@ -53,13 +53,13 @@ class Genome(object):
         elif parent_1 is not None:
             self.weights = copy.deepcopy(parent_1.weights)
             self.biases = copy.deepcopy(parent_1.biases)
-            self.mutate_w()
-            self.mutate_b()
+            self.mutate_w_feedforward()
+            self.mutate_b_feedforward()
             self.mutated = True
 
         elif load_keras is not None:
             self.model = Network(self.id, self, load_keras=load_keras)
-            # mutate
+            self.mutate_w_cnn()
 
         # initial values when population is first created
         else: self.init_w_b()
@@ -81,7 +81,7 @@ class Genome(object):
         self.weights.append(np.random.randn(self.hidden[-1], self.outputs).astype(np.float32))
         self.biases.append(np.random.randn(self.outputs).astype(np.float32))
 
-    def mutate_w(self):
+    def mutate_w_feedforward(self):
         # iterate through layers
         for i, layers in enumerate(self.weights):
             for (j, k), x in np.ndenumerate(layers):
@@ -90,7 +90,26 @@ class Genome(object):
                 if np.random.random() < self.w_mutation_rate:
                     self.weights[i][j][k] += np.random.normal(scale=self.mutation_scale) * 0.5
 
-    def mutate_b(self):
+    def mutate_w_cnn(self):
+        weights = self.model.prediction.get_weights()
+
+        # iterate through layers
+        for i, layers in enumerate(weights):
+            for index, x in np.ndenumerate(layers):
+                # randomly mutate weight
+                if np.random.random() < self.w_mutation_rate:
+
+                    # how much to mutate by
+                    mutation = np.random.normal(scale=self.mutation_scale) * 0.5
+
+                    # depending on shape of np.array
+                    if len(index) == 3: weights[i][index[0]][index[1]][index[2]] += mutation
+                    elif len(index) == 2: weights[i][index[0]][index[1]] += mutation
+                    else: weights[i][index[0]] += mutation
+
+        self.model.prediction.set_weights(weights)
+
+    def mutate_b_feedforward(self):
         # iterate through layers
         for i, layers in enumerate(self.biases):
             for j, bias in enumerate(layers):
