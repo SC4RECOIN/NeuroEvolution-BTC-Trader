@@ -69,7 +69,6 @@ def calculate_profit(trades, trade_prices):
 
     return (usd_wallet / starting_cash - 1) * 100
 ```
-However, this can be whatever you want
 ---   
 
 ### Sample verbose output
