@@ -206,7 +206,7 @@ class Population(object):
             print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
 
         else:
-            model = Network(self.gen_best)
+            model = Network(0, self.gen_best)
             with tf.Session() as sess:
                 actions = sess.run(model.prediction, feed_dict={model.X: inputs})
                 print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
