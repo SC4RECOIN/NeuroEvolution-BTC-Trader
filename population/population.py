@@ -196,12 +196,22 @@ class Population(object):
         return self.gen_best
 
     def test(self, inputs, outputs, fitness_callback, to_test='gen_best'):
-        model = Network(self.gen_best)
-        with tf.Session() as sess:
-            actions = sess.run(model.prediction, feed_dict={model.X: inputs})
+        # built using tf.keras
+        if self.network_params['network'] == 'convolutional':
+
+            # add extra dimension for conv1D channel
+            inputs = inputs[:,:, np.newaxis]
+
+            actions = self.gen_best.model.prediction.predict(inputs)
             print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
 
-        tf.reset_default_graph()
+        else:
+            model = Network(self.gen_best)
+            with tf.Session() as sess:
+                actions = sess.run(model.prediction, feed_dict={model.X: inputs})
+                print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
+
+            tf.reset_default_graph()
 
     def print_progress(self, progress):
         progress = int((progress + 1)/len(self.genomes) * self.verbose_load_bar)

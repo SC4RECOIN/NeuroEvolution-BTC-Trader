@@ -61,12 +61,12 @@ if __name__ == '__main__':
     print('Buy and hold profit (test): {0:.2f}%'.format((price_test[-1] / price_test[0] - 1) * 100))
 
     # genetic parameters
-    pop_size = 10
+    pop_size = 25
     w_mutation_rate = 0.05
     b_mutation_rate = 0.0
     mutation_scale = 0.3
-    mutation_decay = 0.999
-    generations = 3
+    mutation_decay = 0.995
+    generations = 500
 
     # network parameters
     network_params = {
@@ -89,4 +89,4 @@ if __name__ == '__main__':
         pop.evolve(g)
         gen_best = pop.run(inputs_train, price_train, fitness_callback=calculate_profit)
         # gen_best.save()
-        # pop.test(inputs_test, price_test, fitness_callback=calculate_profit)
+        pop.test(inputs_test, price_test, fitness_callback=calculate_profit)
