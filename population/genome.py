@@ -30,10 +30,9 @@ class Genome(object):
         self.model = None
         self.timesteps = None
 
-        try:
-            if self.network == 'recurrent': self.timesteps = network_params['timesteps']
-        except:
+        if 'timesteps' not in network_params:
             raise AttributeError('Must specify timesteps for recurrent network')
+        else: self.timesteps = network_params['timesteps']
 
         self.w_mutation_rate = w_mutation_rate
         self.b_mutation_rate = b_mutation_rate
@@ -59,7 +58,7 @@ class Genome(object):
 
         elif load_keras is not None:
             self.model = Network(self.id, self, load_keras=load_keras)
-            self.mutate_w_cnn()
+            self.mutate_w_keras()
 
         # initial values when population is first created
         else: self.init_w_b()
@@ -90,7 +89,7 @@ class Genome(object):
                 if np.random.random() < self.w_mutation_rate:
                     self.weights[i][j][k] += np.random.normal(scale=self.mutation_scale) * 0.5
 
-    def mutate_w_cnn(self):
+    def mutate_w_keras(self):
         weights = self.model.prediction.get_weights()
 
         # iterate through layers

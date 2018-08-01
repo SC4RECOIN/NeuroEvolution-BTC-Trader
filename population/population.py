@@ -62,32 +62,9 @@ class Population(object):
         parents_2 = self.pool_selection()
         children = []
 
-        # evolving keras network
-        if self.network_params['network'] == 'convolutional':
-            # temporarily save models and clear session
-            configs, weights = [], []
-            for p1 in parents_1:
-                configs.append(self.genomes[p1].model.prediction.to_json())
-                weights.append(self.genomes[p1].model.prediction.get_weights())
 
-            tf.keras.backend.clear_session()
 
-            # reload models
-            for idx, (config, weight) in enumerate(zip(configs, weights)):
-                loaded = model_from_json(config)
-                loaded.set_weights(weight)
-                children.append(Genome(idx,
-                                       self.network_params,
-                                       self.mutation_scale,
-                                       self.w_mutation_rate,
-                                       self.b_mutation_rate,
-                                       load_keras=loaded))
-                if self.verbose:
-                    progress = int((idx + 1)/len(parents_1) * self.verbose_load_bar)
-                    progress_left = self.verbose_load_bar - progress
-                    print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
-
-        else:
+        if self.network_params['network'] == 'feedforward':
             # create next generation
             for idx, (p1, p2) in enumerate(zip(parents_1, parents_2)):
                 if np.random.random() < self.breeding_ratio:
@@ -108,6 +85,31 @@ class Population(object):
                                            self.b_mutation_rate,
                                            parent_1=self.genomes[p1]))
 
+                if self.verbose:
+                    progress = int((idx + 1)/len(parents_1) * self.verbose_load_bar)
+                    progress_left = self.verbose_load_bar - progress
+                    print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
+
+        # evolving keras network
+        else:
+            # temporarily save models and clear session
+            configs, weights = [], []
+            for p1 in parents_1:
+                configs.append(self.genomes[p1].model.prediction.to_json())
+                weights.append(self.genomes[p1].model.prediction.get_weights())
+
+            tf.keras.backend.clear_session()
+
+            # reload models
+            for idx, (config, weight) in enumerate(zip(configs, weights)):
+                loaded = model_from_json(config)
+                loaded.set_weights(weight)
+                children.append(Genome(idx,
+                                       self.network_params,
+                                       self.mutation_scale,
+                                       self.w_mutation_rate,
+                                       self.b_mutation_rate,
+                                       load_keras=loaded))
                 if self.verbose:
                     progress = int((idx + 1)/len(parents_1) * self.verbose_load_bar)
                     progress_left = self.verbose_load_bar - progress
@@ -159,19 +161,7 @@ class Population(object):
     def run(self, inputs, outputs, fitness_callback):
         start = time()
 
-        # built using tf.keras
-        if self.network_params['network'] == 'convolutional':
-            if self.verbose: print('evaluating population....')
-
-            # add extra dimension for conv1D channel
-            inputs = inputs[:,:, np.newaxis]
-
-            for idx, genome in enumerate(self.genomes):
-                actions = genome.model.prediction.predict(inputs)
-                genome.score = fitness_callback(actions, outputs)
-                if self.verbose: self.print_progress(idx)
-
-        else:
+        if self.network_params['network'] == 'feedforward':
             # open session and evaluate population
             with tf.Session() as sess:
                 if self.verbose: print('evaluating population....')
@@ -181,6 +171,24 @@ class Population(object):
                     if self.verbose: self.print_progress(idx)
 
             tf.reset_default_graph()
+
+        else:
+            if self.verbose: print('evaluating population....')
+
+            # reshape data for each network type
+            if self.network_params['network'] == 'convolutional':
+                inputs = inputs[:,:, np.newaxis]
+            elif self.network_params['network'] == 'recurrent':
+                timesteps = self.network_params['timesteps']
+                reshaped = []
+                for i in range(timesteps, inputs.shape[0] + 1):
+                    reshaped.append(inputs[i - timesteps:i])
+                inputs = np.array(reshaped)
+
+            for idx, genome in enumerate(self.genomes):
+                actions = genome.model.prediction.predict(inputs)
+                genome.score = fitness_callback(actions, outputs)
+                if self.verbose: self.print_progress(idx)
 
         # evaluate best model in generation and overall
         self.gen_best = self.genomes[np.argmax([x.score for x in self.genomes])]
@@ -196,22 +204,28 @@ class Population(object):
         return self.gen_best
 
     def test(self, inputs, outputs, fitness_callback, to_test='gen_best'):
-        # built using tf.keras
-        if self.network_params['network'] == 'convolutional':
-
-            # add extra dimension for conv1D channel
-            inputs = inputs[:,:, np.newaxis]
-
-            actions = self.gen_best.model.prediction.predict(inputs)
-            print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
-
-        else:
+        if self.network_params['network'] == 'feedforward':
             model = Network(0, self.gen_best)
             with tf.Session() as sess:
                 actions = sess.run(model.prediction, feed_dict={model.X: inputs})
                 print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
 
             tf.reset_default_graph()
+
+        # built using tf.keras
+        else:
+            # reshape data for each network type
+            if self.network_params['network'] == 'convolutional':
+                inputs = inputs[:,:, np.newaxis]
+            elif self.network_params['network'] == 'recurrent':
+                timesteps = self.network_params['timesteps']
+                reshaped = []
+                for i in range(timesteps, inputs.shape[0] + 1):
+                    reshaped.append(inputs[i - timesteps:i])
+                inputs = np.array(reshaped)
+
+            actions = self.gen_best.model.prediction.predict(inputs)
+            print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
 
     def print_progress(self, progress):
         progress = int((progress + 1)/len(self.genomes) * self.verbose_load_bar)

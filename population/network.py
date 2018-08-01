@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Flatten, InputLayer
+from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Flatten, InputLayer, LSTM
 import numpy as np
 import math
 import os
@@ -22,7 +22,6 @@ class Network(object):
 
         # creating network from config params
         if params is not None:
-
             # network type
             if params.network == 'feedforward':
                 self.X = tf.placeholder("float", [None, params.inputs])
@@ -35,14 +34,14 @@ class Network(object):
 
                 self.prediction = self.feedforward()
 
+            elif load_keras is not None: self.prediction = load_keras
+
             elif params.network == 'recurrent':
-                raise AttributeError('recurrent networks not yet available')
+                self.timesteps = params.timesteps
+                self.prediction = self.recurrent(params.inputs, params.hidden, params.outputs)
 
             elif params.network == 'convolutional':
-                if load_keras is None:
-                    self.prediction = self.convolutional(params.inputs, params.hidden, params.outputs)
-                else:
-                    self.prediction = load_keras
+                self.prediction = self.convolutional(params.inputs, params.hidden, params.outputs)
 
             else: raise AttributeError(params.network, ' is not a valid network type')
 
@@ -61,6 +60,19 @@ class Network(object):
 
         return tf.nn.softmax(layer)
 
+    def recurrent(self, num_inputs, hidden, num_outputs):
+        model = Sequential()
+        model.add(InputLayer(input_shape=(self.timesteps, num_inputs)))
+
+        for idx, hidden_size in enumerate(hidden[:-1]):
+            model.add(LSTM(hidden_size, return_sequences=True))
+
+        model.add(LSTM(hidden[-1], return_sequences=False))
+        model.add(Dense(num_outputs, activation='softmax'))
+        model.compile(loss='mse', optimizer='adam')
+
+        return model
+
     def convolutional(self, num_inputs, hidden, num_outputs):
         # downsampling by a factor of 2
         pooling_layers = math.floor(math.log(num_inputs, 2))
@@ -73,7 +85,7 @@ class Network(object):
             if idx < pooling_layers - 1:
                 model.add(Conv1D(hidden_size,
                                  kernel_size,
-                                 padding='same',  # vs valid?
+                                 padding='same',
                                  activation='relu'))
 
                 model.add(MaxPooling1D(pool_size=2))
