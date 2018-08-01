@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Flatten, InputLayer
 import numpy as np
+import math
 import os
 
 
@@ -62,7 +63,7 @@ class Network(object):
 
     def convolutional(self, num_inputs, hidden, num_outputs):
         # downsampling by a factor of 2
-        pooling_layers = 3 if num_inputs > 8 else 2
+        pooling_layers = math.floor(math.log(num_inputs, 2))
         kernel_size = 3
 
         model = Sequential()
