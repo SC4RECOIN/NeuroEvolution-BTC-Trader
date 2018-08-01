@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Flatten
+from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Flatten, InputLayer
 import numpy as np
 import os
 
@@ -39,7 +39,7 @@ class Network(object):
 
             elif params.network == 'convolutional':
                 if load_keras is None:
-                    self.prediction = self.convolutional(params.inputs, params.outputs)
+                    self.prediction = self.convolutional(params.inputs, params.hidden, params.outputs)
                 else:
                     self.prediction = load_keras
 
@@ -60,33 +60,31 @@ class Network(object):
 
         return tf.nn.softmax(layer)
 
-    def convolutional(self, num_inputs, num_outputs):
-        filters_1 = 16
-        filters_2 = 32
-        dense_h = 32
+    def convolutional(self, num_inputs, hidden, num_outputs):
+        # downsampling by a factor of 2
+        pooling_layers = 3 if num_inputs > 8 else 2
         kernel_size = 3
 
         model = Sequential()
-        model.add(Conv1D(filters_1,
-                         kernel_size,
-                         padding='same',  # vs valid?
-                         activation='relu',
-                         input_shape=(num_inputs, 1)))
+        model.add(InputLayer(input_shape=(num_inputs, 1)))
 
-        model.add(MaxPooling1D(pool_size=2))
+        for idx, hidden_size in enumerate(hidden):
+            if idx < pooling_layers - 1:
+                model.add(Conv1D(hidden_size,
+                                 kernel_size,
+                                 padding='same',  # vs valid?
+                                 activation='relu'))
 
-        model.add(Conv1D(filters_2,
-                         kernel_size,
-                         activation='relu',
-                         padding='same'))
+                model.add(MaxPooling1D(pool_size=2))
 
-        model.add(MaxPooling1D(pool_size=2))
-        # model.add(GlobalMaxPooling1D())
+            elif idx == pooling_layers:
+                model.add(Flatten())
+                model.add(Dense(hidden_size, activation='relu'))
 
-        model.add(Flatten())
-        model.add(Dense(dense_h, activation='relu'))
+            else:
+                model.add(Dense(hidden_size, activation='relu'))
+
         model.add(Dense(num_outputs, activation='softmax'))
-
         model.compile(loss='mse', optimizer='adam')
 
         return model

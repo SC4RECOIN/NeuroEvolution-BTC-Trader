@@ -72,7 +72,7 @@ if __name__ == '__main__':
     network_params = {
         'network': 'convolutional',
         'input': inputs_train.shape[1],
-        'hidden': [16, 16, 16],             # ignored on cnn right now
+        'hidden': [16, 16, 16],
         'output': 2
     }
 
