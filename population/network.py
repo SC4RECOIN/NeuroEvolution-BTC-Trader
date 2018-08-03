@@ -65,9 +65,9 @@ class Network(object):
         model.add(InputLayer(input_shape=(self.timesteps, num_inputs)))
 
         for idx, hidden_size in enumerate(hidden[:-1]):
-            model.add(LSTM(hidden_size, return_sequences=True))
+            model.add(LSTM(hidden_size, return_sequences=True, activation='relu'))
 
-        model.add(LSTM(hidden[-1], return_sequences=False))
+        model.add(LSTM(hidden[-1], return_sequences=False, activation='relu'))
         model.add(Dense(num_outputs, activation='softmax'))
         model.compile(loss='mse', optimizer='adam')
 
