@@ -62,8 +62,6 @@ class Population(object):
         parents_2 = self.pool_selection()
         children = []
 
-
-
         if self.network_params['network'] == 'feedforward':
             # create next generation
             for idx, (p1, p2) in enumerate(zip(parents_1, parents_2)):
@@ -180,10 +178,8 @@ class Population(object):
                 inputs = inputs[:,:, np.newaxis]
             elif self.network_params['network'] == 'recurrent':
                 timesteps = self.network_params['timesteps']
-                reshaped = []
-                for i in range(timesteps, inputs.shape[0] + 1):
-                    reshaped.append(inputs[i - timesteps:i])
-                inputs = np.array(reshaped)
+                inputs = np.array([inputs[i - timesteps:i] for i in range(timesteps, inputs.shape[0] + 1)])
+                outputs = outputs[timesteps - 1:]
 
             for idx, genome in enumerate(self.genomes):
                 actions = genome.model.prediction.predict(inputs)
@@ -219,10 +215,8 @@ class Population(object):
                 inputs = inputs[:,:, np.newaxis]
             elif self.network_params['network'] == 'recurrent':
                 timesteps = self.network_params['timesteps']
-                reshaped = []
-                for i in range(timesteps, inputs.shape[0] + 1):
-                    reshaped.append(inputs[i - timesteps:i])
-                inputs = np.array(reshaped)
+                inputs = np.array([inputs[i - timesteps:i] for i in range(timesteps, inputs.shape[0] + 1)])
+                outputs = outputs[timesteps - 1:]
 
             actions = self.gen_best.model.prediction.predict(inputs)
             print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
