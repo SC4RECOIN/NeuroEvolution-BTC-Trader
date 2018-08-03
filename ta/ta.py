@@ -54,6 +54,15 @@ class TA(object):
 
         return pd.concat([PPO, PPO_signal, PPO_histo], axis=1)
 
+    def ROC(self, period=5, column='close', data=None):
+        """
+        Rate of Change
+        """
+        if data is None:
+            return pd.Series((self.ohlcv[column].diff(period) / self.ohlcv[column][-period]) * 100, name='ROC')
+        else:
+            return pd.Series((data.diff(period) / data[-period]) * 100, name='ROC')
+
     def RSI(self, period=14, column='close'):
         """
         Relative Strength Index
@@ -84,7 +93,7 @@ class TA(object):
         lowest_low = self.ohlcv['low'].rolling(center=False, window=period).min()
 
         stoch_k = pd.Series((highest_high - self.ohlcv['close']) / (highest_high - lowest_low), name='stoch_k') * 100
-        stoch_d = pd.Series(stoch_k.rolling(center=False, window=period, min_periods=period - 1).mean(), name='stoch_d')
+        stoch_d = pd.Series(stoch_k.rolling(center=False, window=d_period, min_periods=d_period - 1).mean(), name='stoch_d')
         ratio = pd.Series(stoch_k - stoch_d, name='ratio')
 
         return pd.concat([stoch_k, stoch_d, ratio], axis=1)
