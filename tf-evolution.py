@@ -32,13 +32,12 @@ def calculate_profit(trades, trade_prices):
 
 def get_data(test_size):
     client = BinanceAPI(trading_pair='BTCUSDT')
-    price_data = client.fetch_data(30, save='data/historical_data.npy')
+    price_data = client.fetch_data(5, save='data/historical_data.npy')
     ta = TA(price_data)
-    inputs = np.transpose(np.array([ta.PPO()['histo'].values,
+    inputs = np.transpose(np.array([ta.PPO(period_fast=7, period_slow=15, signal=6)['histo'].values,
                                     ta.STOCH()['ratio'].values,
-                                    ta.SAR().values / price_data['close'],
                                     ta.FISH()['histo'].values,
-                                    ta.BASP(period=25)['ratio'].values,
+                                    ta.BASP(period=10)['ratio'].values,
                                     ta.VORTEX()['ratio'].values]))
     valid_idx = ta.remove_NaN(inputs)
     inputs, price_data = inputs[valid_idx:], price_data['close'][valid_idx:]
@@ -61,7 +60,7 @@ if __name__ == '__main__':
     print('Buy and hold profit (test): {0:.2f}%'.format((price_test[-1] / price_test[0] - 1) * 100))
 
     # genetic parameters
-    pop_size = 25
+    pop_size = 4
     w_mutation_rate = 0.05
     b_mutation_rate = 0.0
     mutation_scale = 0.3
@@ -70,7 +69,8 @@ if __name__ == '__main__':
 
     # network parameters
     network_params = {
-        'network': 'convolutional',
+        'network': 'recurrent',
+        'timesteps': 4,
         'input': inputs_train.shape[1],
         'hidden': [16, 16, 16],
         'output': 2
@@ -88,5 +88,5 @@ if __name__ == '__main__':
     for g in range(generations):
         pop.evolve(g)
         gen_best = pop.run(inputs_train, price_train, fitness_callback=calculate_profit)
-        # gen_best.save()
+        gen_best.save()
         pop.test(inputs_test, price_test, fitness_callback=calculate_profit)

@@ -129,8 +129,13 @@ class Genome(object):
         # should assign designated biases as well
 
     def save(self, save_folder='model/'):
-        for i, layers in enumerate(self.weights):
-            np.save(save_folder + 'weights{}'.format(i), layers)
+        if self.network == 'feedforward':
+            for i, layers in enumerate(self.weights):
+                np.save(save_folder + 'weights{}'.format(i), layers)
 
-        for i, layers in enumerate(self.biases):
-            np.save(save_folder + 'biases{}'.format(i), layers)
+            for i, layers in enumerate(self.biases):
+                np.save(save_folder + 'biases{}'.format(i), layers)
+
+        else:
+            np.save(save_folder + 'keras_model.h5', self.model.prediction.to_json())
+            np.save(save_folder + 'keras_weights.h5', self.model.prediction.get_weights())
