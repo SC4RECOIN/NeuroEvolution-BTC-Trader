@@ -15,5 +15,5 @@ keys.py
 # live trading
 trade.py
 
-# not my class
-binance_helper.py
+# csv price data
+*.csv
