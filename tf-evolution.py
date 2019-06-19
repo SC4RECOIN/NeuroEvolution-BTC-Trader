@@ -1,21 +1,22 @@
 import tensorflow as tf
 import numpy as np
+import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.externals import joblib
 
 from population.population import Population
 from population.network import Network
 from data.data_util import BinanceAPI
-from ta.ta import TA
+from finta import TA
 
 # suppress tf GPU logging
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+
 # for evaluating model fitness
-def calculate_profit(trades, trade_prices):
-    btc_wallet = 0.
-    starting_cash = 100.
+def calculate_profit(trades, prices):
+    btc_wallet, starting_cash = 0., 100.
     usd_wallet = starting_cash
     fee = 0.001
 
@@ -23,56 +24,56 @@ def calculate_profit(trades, trade_prices):
     for idx, trade in enumerate(trades):
         if holding and not np.argmax(trade):
             holding = False
-            usd_wallet = btc_wallet * trade_prices[idx] * (1 - fee)
+            usd_wallet = btc_wallet * prices[idx] * (1 - fee)
         if not holding and np.argmax(trade):
             holding = True
-            btc_wallet = usd_wallet / trade_prices[idx] * (1 - fee)
+            btc_wallet = usd_wallet / prices[idx] * (1 - fee)
 
     return (usd_wallet / starting_cash - 1) * 100
 
-def get_data(test_size):
-    client = BinanceAPI(trading_pair='BTCUSDT')
-    price_data = client.fetch_data(5, save='data/historical_data.npy')
-    ta = TA(price_data)
-    inputs = np.transpose(np.array([ta.PPO(period_fast=7, period_slow=15, signal=6)['histo'].values,
-                                    ta.STOCH()['ratio'].values,
-                                    ta.FISH()['histo'].values,
-                                    ta.BASP(period=10)['ratio'].values,
-                                    ta.VORTEX()['ratio'].values]))
-    valid_idx = ta.remove_NaN(inputs)
-    inputs, price_data = inputs[valid_idx:], price_data['close'][valid_idx:]
 
-    # test set
-    test_idx = int(len(price_data) *  (1 - test_size))
+def get_data(filepath, min_inv: int = 5):
+    ohlc = pd.read_csv(filepath, index_col=[0])
+    ohlc = ohlc.iloc[::min_inv, :]
+
+    ta = [
+        TA.PPO(ohlc)["HISTO"],
+        TA.STOCHRSI(ohlc),
+        TA.RSI(ohlc),
+        TA.COPP(ohlc),
+        TA.CCI(ohlc)
+    ]
+    
+    # transpose and remove NaN 
+    ta = np.array(ta).transpose()
+    print(ta[0])
+    ta[np.isnan(ta)] = 0
+    closing_prices = ohlc.values[:, ohlc.columns.get_loc('close')]
 
     scaler = StandardScaler()
-    scaler.fit(inputs[:test_idx])
-    inputs = scaler.transform(inputs)
+    scaler.fit(ta)
+    inputs = scaler.transform(ta)
     joblib.dump(scaler, 'model/scaler.pkl')
 
-    return inputs[:test_idx], inputs[test_idx:], price_data[:test_idx], price_data[test_idx:]
+    return inputs, closing_prices
 
 
 if __name__ == '__main__':
-    # inputs
-    inputs_train, inputs_test, price_train, price_test = get_data(test_size=0.2)
-    print('Buy and hold profit: {0:.2f}%'.format((price_train[-1] / price_train[0] - 1) * 100))
-    print('Buy and hold profit (test): {0:.2f}%'.format((price_test[-1] / price_test[0] - 1) * 100))
+    inputs, prices = get_data('data/coinbase-1min.csv')
 
     # genetic parameters
-    pop_size = 4
+    pop_size = 10
     w_mutation_rate = 0.05
     b_mutation_rate = 0.0
     mutation_scale = 0.3
-    mutation_decay = 0.995
-    generations = 500
+    mutation_decay = 0.998
+    generations = 100
 
     # network parameters
     network_params = {
-        'network': 'recurrent',
-        'timesteps': 4,
-        'input': inputs_train.shape[1],
-        'hidden': [16, 16, 16],
+        'network': 'feedforward',
+        'input': inputs.shape[1],
+        'hidden': [16, 16],
         'output': 2
     }
 
