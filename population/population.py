@@ -1,6 +1,5 @@
 from population.genome import Genome
 from population.network import Network
-from tensorflow.keras.models import load_model, model_from_json
 from time import time
 import numpy as np
 import tensorflow as tf
