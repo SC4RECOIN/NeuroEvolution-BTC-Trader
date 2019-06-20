@@ -61,29 +61,18 @@ class Population(object):
 
         # create next generation
         for idx, (p1, p2) in enumerate(zip(parents_1, parents_2)):
-            if np.random.random() < self.breeding_ratio:
-                # breeding
-                children.append(Genome(idx,
-                                        self.network_params,
-                                        self.mutation_scale,
-                                        self.w_mutation_rate,
-                                        self.b_mutation_rate,
-                                        parent_1=self.genomes[p1],
-                                        parent_2=self.genomes[p2]))
-            else:
-                # mutating
-                children.append(Genome(idx,
-                                        self.network_params,
-                                        self.mutation_scale,
-                                        self.w_mutation_rate,
-                                        self.b_mutation_rate,
-                                        parent_1=self.genomes[p1]))
+            children.append(Genome(idx,
+                                   self.network_params,
+                                   self.mutation_scale,
+                                   self.w_mutation_rate,
+                                   self.b_mutation_rate,
+                                   parent_1=self.genomes[p1],
+                                   parent_2=self.genomes[p2] if np.random.random() < self.breeding_ratio else None))
 
             if self.verbose:
                 progress = int((idx + 1)/len(parents_1) * self.verbose_load_bar)
                 progress_left = self.verbose_load_bar - progress
                 print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
-
 
         if self.verbose: print(' ' * (self.verbose_load_bar + 3), end='\r')
         self.genomes = children

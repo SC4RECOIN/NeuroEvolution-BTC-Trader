@@ -2,11 +2,9 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from sklearn.externals import joblib
 
 from population.population import Population
 from population.network import Network
-from data.data_util import BinanceAPI
 from finta import TA
 
 # suppress tf GPU logging
@@ -46,23 +44,22 @@ def get_data(filepath, min_inv: int = 5):
     
     # transpose and remove NaN 
     ta = np.array(ta).transpose()
-    print(ta[0])
     ta[np.isnan(ta)] = 0
     closing_prices = ohlc.values[:, ohlc.columns.get_loc('close')]
 
     scaler = StandardScaler()
     scaler.fit(ta)
     inputs = scaler.transform(ta)
-    joblib.dump(scaler, 'model/scaler.pkl')
 
     return inputs, closing_prices
 
 
 if __name__ == '__main__':
     inputs, prices = get_data('data/coinbase-1min.csv')
+    inputs, prices = inputs[:50000], prices[:50000]
 
     # genetic parameters
-    pop_size = 10
+    pop_size = 50
     w_mutation_rate = 0.05
     b_mutation_rate = 0.0
     mutation_scale = 0.3
@@ -73,7 +70,7 @@ if __name__ == '__main__':
     network_params = {
         'network': 'feedforward',
         'input': inputs.shape[1],
-        'hidden': [16, 16],
+        'hidden': [32, 16],
         'output': 2
     }
 
@@ -88,6 +85,6 @@ if __name__ == '__main__':
     # run for set number of generations
     for g in range(generations):
         pop.evolve(g)
-        gen_best = pop.run(inputs_train, price_train, fitness_callback=calculate_profit)
+        gen_best = pop.run(inputs, prices, fitness_callback=calculate_profit)
         gen_best.save()
-        pop.test(inputs_test, price_test, fitness_callback=calculate_profit)
+        pop.test(inputs, prices, fitness_callback=calculate_profit)

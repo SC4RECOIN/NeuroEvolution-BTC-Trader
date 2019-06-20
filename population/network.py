@@ -4,7 +4,7 @@ import os
 
 
 class Network(object):
-    def __init__(self, id, params=None, load_path=None, load_keras=None):
+    def __init__(self, id, params=None, load_path=None):
         self.id = id
         self.X = None
         self.Y = None

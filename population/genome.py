@@ -26,7 +26,6 @@ class Genome(object):
         self.hidden = network_params['hidden']
         self.outputs = network_params['output']
         self.network = network_params['network']
-        self.model = None
 
         self.w_mutation_rate = w_mutation_rate
         self.b_mutation_rate = b_mutation_rate
@@ -52,6 +51,7 @@ class Genome(object):
 
         # initial values when population is first created
         else: self.init_w_b()
+        self.model = Network(self.id, self)
 
     def init_w_b(self):
         # create weights and bias for first hidden layer
