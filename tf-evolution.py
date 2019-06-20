@@ -68,7 +68,7 @@ if __name__ == '__main__':
     # rotate data to prevent overfitting
     data_rotation = 15
     train_size, test_size = 15000, 5000
-    max_idx = len(prices) - (train_size + test_size)
+    max_idx = len(prices) - max(train_size, test_size)
     x_train, x_test = None, None
     price_train, price_test = None, None
 
@@ -92,9 +92,11 @@ if __name__ == '__main__':
     for g in range(generations):
         if g % data_rotation == 0:
             rand_idx = np.random.randint(0, max_idx)
+            rand_idx_test = np.random.randint(0, max_idx)
             x_train = inputs[rand_idx:rand_idx + train_size]
-            x_test = inputs[rand_idx + train_size:rand_idx + test_size + train_size]
-            price_train, price_test = prices, prices
+            x_test = inputs[rand_idx_test:rand_idx_test + test_size]
+            price_train = prices[rand_idx:rand_idx + train_size]
+            price_test = prices[rand_idx_test:rand_idx_test + test_size]
 
         pop.evolve(g)
         gen_best = pop.run(x_train, price_train, fitness_callback=calculate_profit)
