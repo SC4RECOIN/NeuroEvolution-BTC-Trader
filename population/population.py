@@ -49,7 +49,7 @@ class Population(object):
             return
 
         if self.verbose:
-            print(f"{'='*self.verbose_load_bar, g+1}\ncreating population {1}")
+            print(f"{'=' * self.verbose_load_bar}\ncreating population {g + 1}")
 
         # find fitness by normalizing score
         self.normalize_score()

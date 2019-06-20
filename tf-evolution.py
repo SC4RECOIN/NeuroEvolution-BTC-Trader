@@ -56,15 +56,21 @@ def get_data(filepath, min_inv: int = 5):
 
 if __name__ == '__main__':
     inputs, prices = get_data('data/coinbase-1min.csv')
-    inputs, prices = inputs[:50000], prices[:50000]
-
+    
     # genetic parameters
-    pop_size = 50
+    pop_size = 200
     w_mutation_rate = 0.05
     b_mutation_rate = 0.0
     mutation_scale = 0.3
     mutation_decay = 0.998
     generations = 100
+
+    # rotate data to prevent overfitting
+    data_rotation = 15
+    train_size, test_size = 15000, 5000
+    max_idx = len(prices) - (train_size + test_size)
+    x_train, x_test = None, None
+    price_train, price_test = None, None
 
     # network parameters
     network_params = {
@@ -84,6 +90,12 @@ if __name__ == '__main__':
 
     # run for set number of generations
     for g in range(generations):
+        if g % data_rotation:
+            rand_idx = np.random.randint(0, max_idx)
+            x_train = inputs[rand_idx:train_size]
+            x_test = inputs[rand_idx + train_size:test_size + train_size]
+            price_train, price_test = prices, prices
+
         pop.evolve(g)
         gen_best = pop.run(inputs, prices, fitness_callback=calculate_profit)
         gen_best.save()
