@@ -90,10 +90,10 @@ if __name__ == '__main__':
 
     # run for set number of generations
     for g in range(generations):
-        if g % data_rotation:
+        if g % data_rotation == 0:
             rand_idx = np.random.randint(0, max_idx)
-            x_train = inputs[rand_idx:train_size]
-            x_test = inputs[rand_idx + train_size:test_size + train_size]
+            x_train = inputs[rand_idx:rand_idx + train_size]
+            x_test = inputs[rand_idx + train_size:rand_idx + test_size + train_size]
             price_train, price_test = prices, prices
 
         pop.evolve(g)
