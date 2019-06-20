@@ -97,6 +97,6 @@ if __name__ == '__main__':
             price_train, price_test = prices, prices
 
         pop.evolve(g)
-        gen_best = pop.run(inputs, prices, fitness_callback=calculate_profit)
+        gen_best = pop.run(x_train, price_train, fitness_callback=calculate_profit)
         gen_best.save()
-        pop.test(inputs, prices, fitness_callback=calculate_profit)
+        pop.test(x_test, price_test, fitness_callback=calculate_profit)
