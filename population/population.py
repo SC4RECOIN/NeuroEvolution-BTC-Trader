@@ -132,7 +132,7 @@ class Population(object):
                     actions = [sess.run(genome.model.prediction, feed_dict={genome.model.X: seg[0]}) for seg in data]
                     
                     # return minimum score to discount random high scores
-                    genome.score = min([fitness_callback(actions, seg[1]) for seg in data])
+                    genome.score = min([fitness_callback(actions[idx], seg[1]) for idx, seg in enumerate(data)])
                 else:
                     actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: data[0]})
                     genome.score = fitness_callback(actions, data[1])
