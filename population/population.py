@@ -162,7 +162,7 @@ class Population(object):
         model = Network(0, self.gen_best)
         with tf.Session() as sess:
             actions = sess.run(model.prediction, feed_dict={model.X: inputs})
-            print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
+            print('test score: {0:.2f}%\t(hold: {1:.2f}%)'.format(fitness_callback(actions, outputs), (outputs[-1]/outputs[0]-1)*100))
 
         tf.reset_default_graph()
 
