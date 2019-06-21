@@ -1,6 +1,7 @@
 from population.network import Network
 import numpy as np
 import copy
+import os
 
 
 class Genome(object):
@@ -96,9 +97,13 @@ class Genome(object):
 
         # should assign designated biases as well
 
-    def save(self, save_folder='model/'):
+    def save(self, model_name, save_folder='model/'):
+        path = save_folder + model_name
+        if not os.path.exists(path):
+            os.mkdir(path)
+
         for i, layers in enumerate(self.weights):
-            np.save(save_folder + 'weights{}'.format(i), layers)
+            np.save(path + '/weights{}'.format(i), layers)
 
         for i, layers in enumerate(self.biases):
-            np.save(save_folder + 'biases{}'.format(i), layers)
+            np.save(path + '/biases{}'.format(i), layers)

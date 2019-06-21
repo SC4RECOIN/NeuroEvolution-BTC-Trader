@@ -29,7 +29,9 @@ class Population(object):
 
         self.genomes = self.initial_pop()
         self.overall_best = self.genomes[0]
+        self.gen_stagnation = 0
         self.gen_best = self.genomes[0]
+        self.gen = 0
 
     def initial_pop(self):
         if self.verbose:
@@ -43,13 +45,14 @@ class Population(object):
             for i in range(self.population_size)
         ]
 
-    def evolve(self, g):
+    def evolve(self):
         # genesis population
-        if g == 0:
+        self.gen += 1
+        if self.gen == 1:
             return
 
         if self.verbose:
-            print(f"{'=' * self.verbose_load_bar}\ncreating population {g + 1}")
+            print(f"{'=' * self.verbose_load_bar}\ncreating population {self.gen}")
 
         # find fitness by normalizing score
         self.normalize_score()
@@ -117,22 +120,34 @@ class Population(object):
 
         return idx_arr
 
-    def run(self, inputs, outputs, fitness_callback):
+    def run(self, data, fitness_callback):
         start = time()
 
         # open session and evaluate population
         with tf.Session() as sess:
             if self.verbose: print('evaluating population....')
             for idx, genome in enumerate(self.genomes):
-                actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: inputs})
-                genome.score = fitness_callback(actions, outputs)
+                # list of tuples 
+                if type(data) is list:
+                    actions = [sess.run(genome.model.prediction, feed_dict={genome.model.X: seg[0]}) for seg in data]
+                    
+                    # return minimum score to discount random high scores
+                    genome.score = min([fitness_callback(actions, seg[1]) for seg in data])
+                else:
+                    actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: data[0]})
+                    genome.score = fitness_callback(actions, data[1])
+                
                 if self.verbose: self.print_progress(idx)
 
         tf.reset_default_graph()
+        self.gen_stagnation += 1
 
         # evaluate best model in generation and overall
         self.gen_best = self.genomes[np.argmax([x.score for x in self.genomes])]
-        if self.gen_best.score > self.overall_best.score: self.overall_best = self.gen_best
+        if self.gen_best.score > self.overall_best.score: 
+            self.overall_best = self.gen_best
+            self.gen_best.save(f"gen_{self.gen}")
+            self.gen_stagnation = 0
 
         if self.verbose:
             print(' ' * (self.verbose_load_bar + 3), end='\r')
