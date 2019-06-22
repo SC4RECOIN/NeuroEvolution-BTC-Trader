@@ -3,6 +3,8 @@ from population.network import Network
 from time import time
 import numpy as np
 import tensorflow as tf
+import shutil, os
+import json
 
 
 class Population(object):
@@ -14,7 +16,8 @@ class Population(object):
                  b_mutation_rate=0,
                  mutation_decay=1.0,
                  breeding_ratio=0,
-                 verbose=True):
+                 verbose=True,
+                 clear_old_saves=True):
 
         self.network_params = network_params
         self.population_size = pop_size
@@ -32,6 +35,20 @@ class Population(object):
         self.gen_stagnation = 0
         self.gen_best = self.genomes[0]
         self.gen = 0
+
+        self.model_json = {
+            "network_params": self.network_params,
+            "population_size": self.population_size,
+            "w_mutation_rate": self.w_mutation_rate,
+            "b_mutation_rate": self.b_mutation_rate,
+            "mutation_scale": self.mutation_scale,
+            "mutation_decay": self.mutation_decay,
+            "breeding_ratio": self.breeding_ratio,
+        }
+
+        if clear_old_saves:
+            shutil.rmtree('model') 
+            os.mkdir('model')
 
     def initial_pop(self):
         if self.verbose:
@@ -148,12 +165,16 @@ class Population(object):
             self.overall_best = self.gen_best
             self.gen_best.save(f"gen_{self.gen}")
             self.gen_stagnation = 0
+            
+            with open(f'model/gen_{self.gen}/params.json', 'w') as f:
+                json.dump(self.model_json, f)
 
         if self.verbose:
             print(' ' * (self.verbose_load_bar + 3), end='\r')
             print('average score: {0:.2f}%'.format(np.average(np.array([x.score for x in self.genomes]))))
             print('best score: {0:.2f}%'.format(max([x.score for x in self.genomes])))
             print('record score: {0:.2f}%'.format(self.overall_best.score))
+            print(f"stagnation: {self.gen_stagnation}")
             print('time: {0:.2f}s'.format(time() - start))
 
         return self.gen_best

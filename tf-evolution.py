@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+import joblib
 
 from population.population import Population
 from population.network import Network
@@ -26,6 +27,10 @@ def calculate_profit(trades, prices):
         if not holding and np.argmax(trade):
             holding = True
             btc_wallet = usd_wallet / prices[idx] * (1 - fee)
+
+    # discourage models that dont trade
+    if usd_wallet == starting_cash:
+        return -100.
 
     return (usd_wallet / starting_cash - 1) * 100
 
@@ -54,6 +59,8 @@ def get_data(filepath, min_inv: int = 5):
         TA.FISH(ohlc),
         TA.SQZMI(ohlc) * 1
     ]
+
+    print('first row ta', ta[0])
     
     # transpose and remove NaN 
     ta = np.array(ta).transpose()
@@ -65,6 +72,7 @@ def get_data(filepath, min_inv: int = 5):
     scaler = StandardScaler()
     scaler.fit(ta)
     inputs = scaler.transform(ta)
+    joblib.dump(scaler, 'scaler.pkl')
 
     return inputs, closing_prices
 
@@ -80,12 +88,13 @@ def get_rand_segment(inputs, prices, size):
 
 def get_rand_col(inputs, col):
     max_idx = inputs.shape[1]
-    cols = [inputs[:, np.random.randint(0, max_idx)] for i in range(col)]
-    return np.stack(cols, axis=1)
+    idxs = [np.random.randint(0, max_idx) for i in range(col)]
+    cols = [inputs[:, idx] for idx in idxs]
+    return np.stack(cols, axis=1), idxs
 
 
 if __name__ == '__main__':
-    inputs, prices = get_data('data/coinbase-1min.csv')
+    inputs, prices = get_data('data/coinbase-1min.csv', 15)
     
     # genetic parameters
     pop_size = 200
@@ -96,16 +105,16 @@ if __name__ == '__main__':
     generations = 10000
 
     # rotate data to prevent overfitting
-    data_rotation = 15
-    train_size, test_size = 15000, 5000
-    stagnation_limit = 100
+    data_rotation = 30
+    train_size, test_size = 5000, 2000
+    stagnation_limit = 125
 
     # network parameters
     num_inputs = 4
     network_params = {
         'network': 'feedforward',
         'input': num_inputs,
-        'hidden': [32, 16],
+        'hidden': [16, 32],
         'output': 2
     }
 
@@ -117,18 +126,23 @@ if __name__ == '__main__':
                      b_mutation_rate,
                      mutation_decay)
                      
-    inputs = get_rand_col(inputs, num_inputs)
+    partial_inputs, idxs = get_rand_col(inputs, num_inputs)
+    pop.model_json["ta_indexes"] = idxs
 
     # run for set number of generations
     for g in range(generations):
         if g % data_rotation == 0:
             # grab three sets of data segments
-            train_data = [get_rand_segment(inputs, prices, train_size) for i in range(3)]
-            x_test, price_test = get_rand_segment(inputs, prices, test_size)
+            train_data = [get_rand_segment(partial_inputs, prices, train_size) for i in range(3)]
+            x_test, price_test = get_rand_segment(partial_inputs, prices, test_size)
 
         if pop.gen_stagnation > stagnation_limit:
+            partial_inputs, idxs = get_rand_col(inputs, num_inputs)
+            pop.model_json["ta_indexes"] = idxs
+            pop.initial_pop()
             pop.gen_stagnation = 0
 
         pop.evolve()
         gen_best = pop.run(train_data, fitness_callback=calculate_profit)
         pop.test(x_test, price_test, fitness_callback=calculate_profit)
+        print(f'TA idx: {idxs}')
