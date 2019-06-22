@@ -167,7 +167,7 @@ class Population(object):
             self.gen_stagnation = 0
             
             with open(f'model/gen_{self.gen}/params.json', 'w') as f:
-                json.dump(self.model_json, f)
+                json.dump(self.model_json, f, indent=4)
 
         if self.verbose:
             print(' ' * (self.verbose_load_bar + 3), end='\r')

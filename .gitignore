@@ -17,3 +17,6 @@ trade.py
 
 # csv price data
 *.csv
+
+# saved models
+model

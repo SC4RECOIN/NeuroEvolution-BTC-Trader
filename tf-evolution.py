@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import pandas as pd
+import random
 from sklearn.preprocessing import StandardScaler
 import joblib
 
@@ -60,10 +61,10 @@ def get_data(filepath, min_inv: int = 5):
         TA.SQZMI(ohlc) * 1
     ]
 
-    print('first row ta', ta[0])
     
     # transpose and remove NaN 
     ta = np.array(ta).transpose()
+    print('last row ta', ta[-1])
     ta[np.isnan(ta)] = 0
     ta[np.isinf(ta)] = 0
     closing_prices = ohlc.values[:, ohlc.columns.get_loc('close')]
@@ -87,8 +88,7 @@ def get_rand_segment(inputs, prices, size):
 
 
 def get_rand_col(inputs, col):
-    max_idx = inputs.shape[1]
-    idxs = [np.random.randint(0, max_idx) for i in range(col)]
+    idxs = random.sample(range(inputs.shape[1]), col)
     cols = [inputs[:, idx] for idx in idxs]
     return np.stack(cols, axis=1), idxs
 
