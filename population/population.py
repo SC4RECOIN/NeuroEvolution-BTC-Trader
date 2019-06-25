@@ -164,6 +164,7 @@ class Population(object):
         if self.gen_best.score > self.overall_best.score: 
             self.overall_best = self.gen_best
             self.gen_best.save(f"gen_{self.gen}")
+            self.model_json["fitness"] = self.gen_best.score
             self.gen_stagnation = 0
             
             with open(f'model/gen_{self.gen}/params.json', 'w') as f:
