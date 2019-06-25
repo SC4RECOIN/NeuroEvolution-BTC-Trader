@@ -4,8 +4,19 @@ import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from 'recharts';
 
+import { subscribeToTimer } from './../socket';
+
 class Chart extends React.Component {
+  constructor(props) {
+    super(props);
+
+    subscribeToTimer((err, timestamp) => this.setState({ 
+      timestamp 
+    }));
+  }
+    
   state = {
+    timestamp: 'no timestamp yet',
     loading: false,
     chartData: null,
     testSize: 20,
@@ -81,6 +92,7 @@ class Chart extends React.Component {
             <p style={{marginTop: 30}}><b>Results</b></p>
             <p>Bot ROI: {this.state.botROI}%</p>
             <p>Hold ROI: {this.state.holdROI}%</p>
+            <p>This is the timer value: {this.state.timestamp}</p>
           </Col>
         </Row>
       </div>
