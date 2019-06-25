@@ -42,29 +42,22 @@ def get_data(filepath, min_inv: int = 5):
     print('Calculating TA...')
 
     ta = [
-        TA.ER(ohlc),
-        TA.ROC(ohlc),
-        TA.PPO(ohlc)["HISTO"],
-        TA.STOCHRSI(ohlc),
-        TA.IFT_RSI(ohlc),
-        TA.BBWIDTH(ohlc),
-        TA.PERCENT_B(ohlc),
-        TA.ADX(ohlc),
-        TA.UO(ohlc),
-        TA.AO(ohlc),
-        TA.WILLIAMS(ohlc),
-        TA.RSI(ohlc),
-        TA.COPP(ohlc),
-        TA.CCI(ohlc),
-        TA.CHAIKIN(ohlc),
-        TA.FISH(ohlc),
-        TA.SQZMI(ohlc) * 1
+        TA.MOM(pd.DataFrame({'close': TA.ER(ohlc)}), 3),            # 0
+        TA.MOM(pd.DataFrame({'close': TA.PPO(ohlc)["HISTO"]}), 3),  # 1
+        TA.MOM(pd.DataFrame({'close': TA.STOCHRSI(ohlc)}), 3),      # 2
+        TA.MOM(pd.DataFrame({'close': TA.IFT_RSI(ohlc)}), 3),       # 3
+        TA.MOM(pd.DataFrame({'close': TA.ADX(ohlc)}), 3),           # 4
+        TA.MOM(pd.DataFrame({'close': TA.UO(ohlc)}), 3),            # 5
+        TA.MOM(pd.DataFrame({'close': TA.AO(ohlc)}), 3),            # 6
+        TA.MOM(pd.DataFrame({'close': TA.RSI(ohlc)}), 3),           # 7
+        TA.MOM(pd.DataFrame({'close': TA.COPP(ohlc)}), 3),          # 8
+        TA.MOM(pd.DataFrame({'close': TA.CCI(ohlc)}), 3),           # 9
+        TA.MOM(pd.DataFrame({'close': TA.CHAIKIN(ohlc)}), 3),       # 10
+        TA.MOM(pd.DataFrame({'close': TA.FISH(ohlc)}), 3)           # 11
     ]
-
     
     # transpose and remove NaN 
     ta = np.array(ta).transpose()
-    print('last row ta', ta[-1])
     ta[np.isnan(ta)] = 0
     ta[np.isinf(ta)] = 0
     closing_prices = ohlc.values[:, ohlc.columns.get_loc('close')]
@@ -102,7 +95,6 @@ if __name__ == '__main__':
     b_mutation_rate = 0.0
     mutation_scale = 0.3
     mutation_decay = 1.
-    generations = 10000
 
     # rotate data to prevent overfitting
     data_rotation = 30
@@ -129,8 +121,8 @@ if __name__ == '__main__':
     partial_inputs, idxs = get_rand_col(inputs, num_inputs)
     pop.model_json["ta_indexes"] = idxs
 
-    # run for set number of generations
-    for g in range(generations):
+    g = 0
+    while True:
         if g % data_rotation == 0:
             # grab three sets of data segments
             train_data = [get_rand_segment(partial_inputs, prices, train_size) for i in range(3)]
@@ -146,3 +138,4 @@ if __name__ == '__main__':
         gen_best = pop.run(train_data, fitness_callback=calculate_profit)
         pop.test(x_test, price_test, fitness_callback=calculate_profit)
         print(f'TA idx: {idxs}')
+        g += 1
