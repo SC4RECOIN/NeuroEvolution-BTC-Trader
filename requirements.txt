@@ -1,0 +1,9 @@
+python-socketio
+tensorflow-gpu==1.4.0
+scikit-learn
+numpy
+pandas
+Flask
+finta==0.3.8
+aiohttp
+joblib

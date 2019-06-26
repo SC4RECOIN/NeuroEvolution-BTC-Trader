@@ -1,22 +1,25 @@
 from aiohttp import web
+from threading import Thread
 import socketio
+import json
 
 sio = socketio.AsyncServer()
+
 app = web.Application()
 sio.attach(app)
 
 @sio.on('connect')
 def connect(sid, environ):
-    print("connect", sid)
+    print("connected:", sid)
+    send_gen_update({'generation': 69})
 
-@sio.on('subscribeToTimer')
-async def message(sid, data):
-    print("react app connected to socket")
-    await sio.emit('timer', 'Message sent from server')
+async def send_gen_update(data):
+    await sio.emit('update', json.dumps(data))
 
 @sio.on('disconnect')
 def disconnect(sid):
-    print('disconnect', sid)
+    print('disconnected:', sid)
 
-def run():
-    web.run_app(app)
+
+web.run_app(app)
+# Thread(target=web.run_app, args=(self.app))

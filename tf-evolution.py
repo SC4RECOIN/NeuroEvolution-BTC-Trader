@@ -7,6 +7,7 @@ import joblib
 
 from population.population import Population
 from population.network import Network
+from server import *
 from finta import TA
 
 # suppress tf GPU logging
@@ -133,6 +134,9 @@ if __name__ == '__main__':
             pop.model_json["ta_indexes"] = idxs
             pop.initial_pop()
             pop.gen_stagnation = 0
+
+        # update interface
+        socket.send_gen_update({'generation': g})
 
         pop.evolve()
         gen_best = pop.run(train_data, fitness_callback=calculate_profit)

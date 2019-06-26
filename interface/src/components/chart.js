@@ -10,13 +10,13 @@ class Chart extends React.Component {
   constructor(props) {
     super(props);
 
-    subscribeToTimer((err, timestamp) => this.setState({ 
-      timestamp 
+    subscribeToTimer((err, data) => this.setState({ 
+      generation: data.generation 
     }));
   }
     
   state = {
-    timestamp: 'no timestamp yet',
+    generation: 0,
     loading: false,
     chartData: null,
     testSize: 20,
@@ -92,7 +92,7 @@ class Chart extends React.Component {
             <p style={{marginTop: 30}}><b>Results</b></p>
             <p>Bot ROI: {this.state.botROI}%</p>
             <p>Hold ROI: {this.state.holdROI}%</p>
-            <p>This is the timer value: {this.state.timestamp}</p>
+            <p>Generation: {this.state.generation}</p>
           </Col>
         </Row>
       </div>
