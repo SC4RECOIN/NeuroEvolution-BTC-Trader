@@ -7,7 +7,7 @@ import joblib
 
 from population.population import Population
 from population.network import Network
-from server import *
+from server import send_data
 from finta import TA
 
 # suppress tf GPU logging
@@ -136,7 +136,7 @@ if __name__ == '__main__':
             pop.gen_stagnation = 0
 
         # update interface
-        socket.send_gen_update({'generation': g})
+        send_data({'generation': g})
 
         pop.evolve()
         gen_best = pop.run(train_data, fitness_callback=calculate_profit)

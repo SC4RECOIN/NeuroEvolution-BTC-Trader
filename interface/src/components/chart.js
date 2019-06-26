@@ -10,9 +10,12 @@ class Chart extends React.Component {
   constructor(props) {
     super(props);
 
-    subscribeToTimer((err, data) => this.setState({ 
-      generation: data.generation 
-    }));
+    subscribeToTimer((err, data) => {
+      this.setState({ 
+        generation: data.generation 
+      })
+      console.log("socket event received");
+  });
   }
     
   state = {

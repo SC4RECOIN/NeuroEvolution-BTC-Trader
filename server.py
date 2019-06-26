@@ -1,25 +1,18 @@
-from aiohttp import web
+from flask import Flask, render_template
+from flask_socketio import SocketIO
 from threading import Thread
-import socketio
 import json
 
-sio = socketio.AsyncServer()
 
-app = web.Application()
-sio.attach(app)
+app = Flask(__name__)
+socketio = SocketIO(app)
 
-@sio.on('connect')
-def connect(sid, environ):
-    print("connected:", sid)
-    send_gen_update({'generation': 69})
+@socketio.on('welcome')
+def handle_message(message):
+    print('received message: ' + message)
 
-async def send_gen_update(data):
-    await sio.emit('update', json.dumps(data))
-
-@sio.on('disconnect')
-def disconnect(sid):
-    print('disconnected:', sid)
+def send_data(data):
+    socketio.emit('update', json.dumps(data), broadcast=True)
 
 
-web.run_app(app)
-# Thread(target=web.run_app, args=(self.app))
+thread = Thread(target=socketio.run, args=(app,)).start()
