@@ -1,10 +1,11 @@
 import React from 'react';
 import { Row, Col, Button } from 'antd';
+import Results from './results';
 import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from 'recharts';
 
-import { genPriceUpdate, genGenUpdate } from './../socket';
+import { genPriceUpdate } from './../socket';
 
 class Chart extends React.Component {
   constructor(props) {
@@ -17,24 +18,11 @@ class Chart extends React.Component {
         generationBest: data.generation
       })
     });
-
-    genGenUpdate((err, data) => {
-      console.log("Gen data received");
-      this.setState({ 
-        genData: data.results,
-        generation: data.generation
-      })
-    });
   }
     
   state = {
-    generationBest: 0,
-    genData: "",
-    generation: 0,
     loading: false,
-    chartData: null,
-    botROI: "",
-    holdROI: ""
+    chartData: null
   }
 
   sendTest = () => {}
@@ -65,18 +53,14 @@ class Chart extends React.Component {
             </div>
           </div>
         </Row>
+        <p>Overall best generation: {this.state.generationBest}</p>
         <Row>
           <Col span={4}>
             <Button style={{marginTop: "1em"}} ghost loading={this.state.loading} onClick={this.sendTest}>Train</Button>
           </Col>
         </Row>
         <Row>
-          <Col span={12}>
-            <p style={{marginTop: 30}}><b>Results</b></p>
-            <p>Overall best generation: {this.state.generationBest}</p>
-            <p>Current generation: {this.state.generation}</p>
-            <p>{JSON.stringify(this.state.genData)}</p>
-          </Col>
+          <Results />
         </Row>
       </div>
     );
