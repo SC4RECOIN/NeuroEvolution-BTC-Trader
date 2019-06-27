@@ -11,8 +11,7 @@ socketio = SocketIO(app)
 def handle_message(message):
     print('received message: ' + message)
 
-def send_data(data):
-    socketio.emit('update', json.dumps(data), broadcast=True)
-
+def send_data(name, data):
+    socketio.emit(name, json.dumps(data), broadcast=True)
 
 thread = Thread(target=socketio.run, args=(app,)).start()
