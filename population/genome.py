@@ -16,6 +16,8 @@ class Genome(object):
 
         # fitness is score normalized
         self.fitness = 0
+        self.actions = None
+        self.prices = []
         self.score = 0
         self.id = id
 

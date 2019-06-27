@@ -135,9 +135,6 @@ if __name__ == '__main__':
             pop.initial_pop()
             pop.gen_stagnation = 0
 
-        # update interface
-        send_data({'generation': g})
-
         pop.evolve()
         gen_best = pop.run(train_data, fitness_callback=calculate_profit)
         pop.test(x_test, price_test, fitness_callback=calculate_profit)

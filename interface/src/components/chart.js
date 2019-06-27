@@ -1,61 +1,43 @@
 import React from 'react';
-import { Slider, Row, Col, Button } from 'antd';
+import { Row, Col, Button } from 'antd';
 import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from 'recharts';
 
-import { subscribeToTimer } from './../socket';
+import { genPriceUpdate, genGenUpdate } from './../socket';
 
 class Chart extends React.Component {
   constructor(props) {
     super(props);
 
-    subscribeToTimer((err, data) => {
+    genPriceUpdate((err, data) => {
+      console.log("Data received");
       this.setState({ 
-        generation: data.generation 
+        chartData: data.generation_trades,
+        generationBest: data.generation
       })
-      console.log("socket event received");
-  });
+    });
+
+    genGenUpdate((err, data) => {
+      console.log("Gen data received");
+      this.setState({ 
+        genData: data.results,
+        generation: data.generation
+      })
+    });
   }
     
   state = {
+    generationBest: 0,
+    genData: "",
     generation: 0,
     loading: false,
     chartData: null,
-    testSize: 20,
-    testBack: true,
     botROI: "",
     holdROI: ""
   }
 
-  updateTestSize = (e) => {
-    this.setState({testSize: e})
-  }
-
-  sendTest = () => {
-    this.setState({loading: true})
-    fetch("http://localhost:5000/train", { 
-      method: "POST",
-      headers: {'content-type': 'application/json'},
-      body: JSON.stringify({
-        testSize: this.state.testSize/100,
-        testBack: this.state.testBack
-      })
-    })
-    .then(res => res.json())
-    .then(res =>  {
-      this.setState({
-        loading: false,
-        chartData: res.data,
-        botROI: res.bot_roi,
-        holdROI: res.holding_roi
-      });
-    })
-    .catch(e => {
-      console.log(`Error sending training request: ${e}`);
-      this.setState({loading: false});
-    })
-  }
+  sendTest = () => {}
 
   render() {
     const data = this.state.chartData || [];
@@ -85,17 +67,15 @@ class Chart extends React.Component {
         </Row>
         <Row>
           <Col span={4}>
-            <span style={{marginLeft: 4}}>Test size</span>
-            <Slider defaultValue={20} onChange={this.updateTestSize}/>
             <Button style={{marginTop: "1em"}} ghost loading={this.state.loading} onClick={this.sendTest}>Train</Button>
           </Col>
         </Row>
         <Row>
           <Col span={12}>
             <p style={{marginTop: 30}}><b>Results</b></p>
-            <p>Bot ROI: {this.state.botROI}%</p>
-            <p>Hold ROI: {this.state.holdROI}%</p>
-            <p>Generation: {this.state.generation}</p>
+            <p>Overall best generation: {this.state.generationBest}</p>
+            <p>Current generation: {this.state.generation}</p>
+            <p>{JSON.stringify(this.state.genData)}</p>
           </Col>
         </Row>
       </div>

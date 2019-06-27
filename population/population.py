@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow as tf
 import shutil, os
 import json
+from server import send_data
 
 
 class Population(object):
@@ -149,10 +150,13 @@ class Population(object):
                     actions = [sess.run(genome.model.prediction, feed_dict={genome.model.X: seg[0]}) for seg in data]
                     
                     # return minimum score to discount random high scores
-                    genome.score = min([fitness_callback(actions[idx], seg[1]) for idx, seg in enumerate(data)])
+                    scores = [fitness_callback(actions[idx], seg[1]) for idx, seg in enumerate(data)]
+                    genome.score = min(scores)
+                    genome.actions = actions[np.argmin(scores)]
+                    genome.prices = data[np.argmin(scores)][1]
                 else:
-                    actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: data[0]})
-                    genome.score = fitness_callback(actions, data[1])
+                    genome.actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: data[0]})
+                    genome.score = fitness_callback(genome.actions, data[1])
                 
                 if self.verbose: self.print_progress(idx)
 
@@ -163,6 +167,7 @@ class Population(object):
         self.gen_best = self.genomes[np.argmax([x.score for x in self.genomes])]
         if self.gen_best.score > self.overall_best.score: 
             self.overall_best = self.gen_best
+            self.send_best_trading_data()
             self.gen_best.save(f"gen_{self.gen}")
             self.model_json["fitness"] = self.gen_best.score
             self.gen_stagnation = 0
@@ -171,10 +176,16 @@ class Population(object):
                 json.dump(self.model_json, f, indent=4)
 
         if self.verbose:
+            results = {
+                'average_score': f"{np.average(np.array([x.score for x in self.genomes])):.2f}",
+                'best_score': f"{max([x.score for x in self.genomes]):.2f}",
+                'record_score': f"{self.overall_best.score:.2f}",
+            }
+            send_data('genResults', {'results': results, 'generation': self.gen})
             print(' ' * (self.verbose_load_bar + 3), end='\r')
-            print('average score: {0:.2f}%'.format(np.average(np.array([x.score for x in self.genomes]))))
-            print('best score: {0:.2f}%'.format(max([x.score for x in self.genomes])))
-            print('record score: {0:.2f}%'.format(self.overall_best.score))
+            print(f"average score: {results['average_score']}%")
+            print(f"best score: {results['best_score']}%")
+            print(f"record score: {results['record_score']}%")
             print(f"stagnation: {self.gen_stagnation}")
             print('time: {0:.2f}s'.format(time() - start))
 
@@ -187,6 +198,21 @@ class Population(object):
             print('test score: {0:.2f}%\t(hold: {1:.2f}%)'.format(fitness_callback(actions, outputs), (outputs[-1]/outputs[0]-1)*100))
 
         tf.reset_default_graph()
+
+    def send_best_trading_data(self):
+        # send to interface
+        graph_data = [{'price': f'{price:.3f}'} for price in self.overall_best.prices]
+        holding = False
+        for idx, trade in enumerate(self.overall_best.actions):
+            price = self.overall_best.prices[idx]
+            if holding and not np.argmax(trade):
+                holding = False
+                graph_data[idx]['sell'] = f"{price:.3f}"
+            if not holding and np.argmax(trade):
+                holding = True
+                graph_data[idx]['buy'] = f"{price:.3f}"
+        
+        send_data('genUpdate', {'generation_trades': graph_data, 'generation': self.gen})
 
     def print_progress(self, progress):
         progress = int((progress + 1)/len(self.genomes) * self.verbose_load_bar)
