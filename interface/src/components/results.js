@@ -16,11 +16,8 @@ class Results extends React.Component {
   }
     
   state = {
-    generationBest: 0,
     genData: "",
-    generation: 0,
-    botROI: "",
-    holdROI: ""
+    generation: 0
   }
 
   render() {
