@@ -3,6 +3,9 @@ from flask_socketio import SocketIO
 from threading import Thread
 import json
 
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 app = Flask(__name__)
 socketio = SocketIO(app)
