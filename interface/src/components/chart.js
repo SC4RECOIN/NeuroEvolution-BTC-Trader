@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Button } from 'antd';
+import { Row, Col } from 'antd';
 import Results from './results';
 import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer
@@ -21,17 +21,14 @@ class Chart extends React.Component {
   }
     
   state = {
-    loading: false,
     chartData: null
   }
-
-  sendTest = () => {}
 
   render() {
     const data = this.state.chartData || [];
 
     return (
-      <div className="chart">
+      <div className="panel">
         <Row>
           <div style={{overflowX: "scroll", overflowY: "hidden", marginBottom: "1.2em" }}>
             <div style={{ width: data.length * 3, height: 400}}>
@@ -54,11 +51,6 @@ class Chart extends React.Component {
           </div>
         </Row>
         <p>Overall best generation: {this.state.generationBest}</p>
-        <Row>
-          <Col span={4}>
-            <Button style={{marginTop: "1em"}} ghost loading={this.state.loading} onClick={this.sendTest}>Train</Button>
-          </Col>
-        </Row>
         <Row>
           <Results />
         </Row>

@@ -36,13 +36,10 @@ code {
   padding: 0.75em;
 }
 
-.header-item:hover {
-  background-color: rgb(59,58,57)
-}
-
-.chart {
+.panel {
   margin: 2em;
   padding: 2em;
   box-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.7);
   background-color: rgb(32,31,30);
+  color: white;
 }
