@@ -5,13 +5,15 @@ import Parameters from './components/parameters';
 
 class App extends React.Component {
   state = {
-    activeHeader: 0,
-    activeColor: "rgb(20, 20, 20)",
-    unactiveColor: "rgb(32,31,30)"
+    activeHeader: 0
   }
 
   setActivePage(activePage) {
     this.setState({activeHeader: activePage})
+  }
+
+  getTabColor(idx) {
+    return this.state.activeHeader === idx ? "rgb(20, 20, 20)" : "rgb(32,31,30)"
   }
 
   render() {
@@ -26,16 +28,16 @@ class App extends React.Component {
           <span 
             className="header-item" 
             onClick={() => this.setActivePage(0)}
-            style={{backgroundColor: this.state.activeHeader === 0 ? this.state.activeColor : this.state.unactiveColor}}
+            style={{backgroundColor: this.getTabColor(0)}}
           >
               Training Parameters
           </span>
           <span 
             className="header-item" 
             onClick={() => this.setActivePage(1)}
-            style={{backgroundColor: this.state.activeHeader === 1 ? this.state.activeColor : this.state.unactiveColor}}
+            style={{backgroundColor: this.getTabColor(1)}}
           >
-            Generation Best
+            Training Progress
           </span>
         </div>
         {pageContent[this.state.activeHeader]}
