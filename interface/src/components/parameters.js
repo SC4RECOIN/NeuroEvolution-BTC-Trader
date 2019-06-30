@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Slider, Row, Col } from 'antd';
+import { Button, Slider, Row, Col, Checkbox } from 'antd';
 import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from 'recharts';
@@ -119,6 +119,21 @@ class Parameters extends React.Component {
         </Button>
         <hr style={{marginTop: "2em"}}/>
         <p style={{'fontSize': '1.6em'}}>Technical Analysis</p>
+        <Row>
+          <Col span={4}>
+            <Checkbox style={{color: 'white'}}>RSI</Checkbox><br/><br/>
+            <Checkbox style={{color: 'white'}}>PPO</Checkbox>
+          </Col>
+          <Col span={4}>
+            <Checkbox style={{color: 'white'}}>MACD</Checkbox><br/><br/>
+            <Checkbox style={{color: 'white'}}>ER</Checkbox>
+            </Col>
+          <Col span={4}>
+            <Checkbox style={{color: 'white'}}>CCI</Checkbox><br/><br/>
+            <Checkbox style={{color: 'white'}}>COPP</Checkbox>
+          </Col>
+        </Row>
+        <br/>
         <Button 
           ghost
           loading={this.state.loadingTA}
