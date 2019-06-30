@@ -15,4 +15,14 @@ function requestSample(cb) {
   socket.on('sampleResults', data => cb(null, JSON.parse(data)));
 }
 
-export { genPriceUpdate, genGenUpdate, requestSample };
+function requestTA(ohlc, cb) {
+  socket.emit('taRequest', ohlc);
+  socket.on('taResults', data => cb(null, JSON.parse(data)));
+}
+
+export { 
+  genPriceUpdate, 
+  genGenUpdate, 
+  requestSample, 
+  requestTA 
+};

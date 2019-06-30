@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from 'antd';
-import { requestSample } from './../socket';
+import { requestSample, requestTA } from './../socket';
 import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from 'recharts';
@@ -31,16 +31,21 @@ class Parameters extends React.Component {
 
   fetchTA() {
     this.setState({loadingTA: true});
-    requestSample((err, data) => {
-      console.log("TA data received");
+    requestTA(this.state.ohlc, (err, data) => {
+      let taChart = [];
+      Object.keys(data.close).forEach((key) => {
+        taChart.push({'rsi': data[key]});
+      });
       this.setState({ 
         loadingTA: false,
+        taData: taChart
       })
     });
   }
 
   render() {
     const data = this.state.chartData || [];
+    const ta = this.state.taData || [];
 
     return (
       <div className="panel">
@@ -59,6 +64,21 @@ class Parameters extends React.Component {
               <Line type="linear" dataKey="price" stroke="#8884d8" dot={false} />
               <Scatter dataKey="buy" fill="green" />
               <Scatter dataKey="sell" fill="red" />
+            </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+          <div style={{ width: Math.max(data.length * 3, 1200), height: 200}}>
+            <ResponsiveContainer>
+            <ComposedChart 
+              data={ta}
+              margin={{
+                top: 10, right: 30, left: 0, bottom: 0
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis />
+              <YAxis domain={['dataMin', 'dataMax']}/>
+              <Line type="linear" dataKey="rsi" stroke="#8884d8" dot={false} />
             </ComposedChart>
             </ResponsiveContainer>
           </div>
