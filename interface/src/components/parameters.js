@@ -8,6 +8,7 @@ import {
 class Parameters extends React.Component {
   state = {
     loading: false,
+    loadingTA: false,
     chartData: null,
     ohlc: null
   }
@@ -16,12 +17,24 @@ class Parameters extends React.Component {
     this.setState({loading: true});
     requestSample((err, data) => {
       console.log("Sample data received");
-      let chart = []
-      data.close.forEach(d => chart.push({'price': d}))
+      let chart = [];
+      Object.keys(data.close).forEach((key) => {
+        chart.push({'price': data.close[key]});
+      });
       this.setState({ 
         loading: false,
         ohlc: data,
         chartData: chart
+      })
+    });
+  }
+
+  fetchTA() {
+    this.setState({loadingTA: true});
+    requestSample((err, data) => {
+      console.log("TA data received");
+      this.setState({ 
+        loadingTA: false,
       })
     });
   }
@@ -32,7 +45,7 @@ class Parameters extends React.Component {
     return (
       <div className="panel">
         <div style={{overflowX: "scroll", overflowY: "hidden", marginBottom: "1.2em" }}>
-          <div style={{ width: data.length * 3, height: 400}}>
+          <div style={{ width: Math.max(data.length * 3, 1200), height: 400}}>
             <ResponsiveContainer>
             <ComposedChart 
               data={data}
@@ -54,9 +67,20 @@ class Parameters extends React.Component {
           ghost
           loading={this.state.loading}
           style={{marginTop: "1em"}}  
-          onClick={() => this.fetchSample()}>
+          onClick={() => this.fetchSample()}
+        >
             Get Random Segment
-          </Button>
+        </Button>
+        <hr style={{marginTop: "2em"}}/>
+        <p style={{'fontSize': '1.6em'}}>Technical Analysis</p>
+        <Button 
+          ghost
+          loading={this.state.loadingTA}
+          style={{marginTop: "1em"}}  
+          onClick={() => this.fetchTA()}
+        >
+            Calculate TA
+        </Button>
       </div>
     );
   }

@@ -18,7 +18,7 @@ def handle_message(message):
 
 @socketio.on('sampleRequest')
 def handle_message(sample_size):
-    d = data.get_rand_segment(sample_size)[:10]
+    d = data.get_rand_segment(sample_size)[:100]
     socketio.emit('sampleResults', d.to_json(), broadcast=True)
 
 def send_data(name, data):

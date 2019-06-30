@@ -21,6 +21,10 @@ p {
   font-size: 1.1em;
 }
 
+hr {
+    border: 1px solid rgb(24, 23, 23);
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }

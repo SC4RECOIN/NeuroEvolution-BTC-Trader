@@ -9,7 +9,9 @@ class Results extends React.Component {
     genGenUpdate((err, data) => {
       console.log("Gen data received");
       this.setState({ 
-        genData: data.results,
+        avgScore: data.results.average_score,
+        bestScore: data.results.best_score,
+        recordScore: data.results.record_score,
         generation: data.generation
       })
     });
@@ -24,10 +26,12 @@ class Results extends React.Component {
     return (
       <div className="results">
         <Row>
-          <Col span={12}>
+          <Col span={4}>
             <p style={{marginTop: 30}}><b>Results</b></p>
             <p>Current generation: {this.state.generation}</p>
-            <p>{JSON.stringify(this.state.genData)}</p>
+            <p>Average score: {this.state.avgScore}</p>
+            <p>Best score: {this.state.bestScore}</p>
+            <p>Record score: {this.state.recordScore}</p>
           </Col>
         </Row>
       </div>
