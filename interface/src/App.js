@@ -1,6 +1,7 @@
 import React from 'react';
 import Chart from './components/chart';
 import Parameters from './components/parameters';
+import { Carousel } from 'antd';
 
 
 class App extends React.Component {
@@ -9,6 +10,7 @@ class App extends React.Component {
   }
 
   setActivePage(activePage) {
+    this.carousel.goTo(activePage)
     this.setState({activeHeader: activePage})
   }
 
@@ -40,7 +42,10 @@ class App extends React.Component {
             Training Progress
           </span>
         </div>
-        {pageContent[this.state.activeHeader]}
+        <Carousel ref={carousel => (this.carousel = carousel)}>
+          <Parameters />
+          <Chart />
+        </Carousel>
       </div>
     );
   }
