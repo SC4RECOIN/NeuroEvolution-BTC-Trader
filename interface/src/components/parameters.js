@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from 'antd';
+import { Button, Slider, Row, Col } from 'antd';
 import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from 'recharts';
@@ -9,7 +9,12 @@ class Parameters extends React.Component {
     loading: false,
     loadingTA: false,
     chartData: null,
-    ohlc: null
+    ohlc: null,
+    sampleSize: 200
+  }
+
+  updateSampleSize = (e) => {
+    this.setState({sampleSize: e})
   }
 
   fetchSample() {
@@ -17,7 +22,7 @@ class Parameters extends React.Component {
     fetch('http://127.0.0.1:5000/sample-request', {
       headers: {'Content-Type': 'application/json'},
       method: 'POST',
-      body: JSON.stringify({'sampleSize': 100})
+      body: JSON.stringify({'sampleSize': this.state.sampleSize})
     })
       .then(r => r.json())
       .then(data => {
@@ -63,7 +68,7 @@ class Parameters extends React.Component {
     return (
       <div className="panel">
         <div style={{overflowX: "scroll", overflowY: "hidden", marginBottom: "1.2em" }}>
-          <div style={{ width: Math.max(data.length * 3, 1200), height: 400}}>
+          <div style={{ width: Math.max(data.length * 5, 1200), height: 400}}>
             <ResponsiveContainer>
             <ComposedChart 
               data={data}
@@ -96,6 +101,14 @@ class Parameters extends React.Component {
             </ResponsiveContainer>
           </div>
         </div>
+        <Row>
+          <Col span={2}>
+            <p style={{marginTop: 7}}>Segment size:</p>
+          </Col>
+          <Col span={12}>
+            <Slider defaultValue={200} onChange={this.updateSampleSize} min={100} max={500}/>
+          </Col>
+        </Row>
         <Button 
           ghost
           loading={this.state.loading}
