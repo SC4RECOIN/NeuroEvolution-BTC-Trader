@@ -9,20 +9,7 @@ function genGenUpdate(cb) {
   socket.on('genResults', data => cb(null, JSON.parse(data)));
 }
 
-function requestSample(cb) {
-  const sampleSize = 100;
-  socket.emit('sampleRequest', sampleSize);
-  socket.on('sampleResults', data => cb(null, JSON.parse(data)));
-}
-
-function requestTA(ohlc, cb) {
-  socket.emit('taRequest', ohlc);
-  socket.on('taResults', data => cb(null, JSON.parse(data)));
-}
-
 export { 
   genPriceUpdate, 
-  genGenUpdate, 
-  requestSample, 
-  requestTA 
+  genGenUpdate
 };

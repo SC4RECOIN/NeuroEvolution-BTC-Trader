@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button } from 'antd';
-import { requestSample, requestTA } from './../socket';
 import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from 'recharts';
@@ -15,32 +14,46 @@ class Parameters extends React.Component {
 
   fetchSample() {
     this.setState({loading: true});
-    requestSample((err, data) => {
-      console.log("Sample data received");
-      let chart = [];
-      Object.keys(data.close).forEach((key) => {
-        chart.push({'price': data.close[key]});
-      });
-      this.setState({ 
-        loading: false,
-        ohlc: data,
-        chartData: chart
+    fetch('http://127.0.0.1:5000/sample-request', {
+      headers: {'Content-Type': 'application/json'},
+      method: 'POST',
+      body: JSON.stringify({'sampleSize': 100})
+    })
+      .then(r => r.json())
+      .then(data => {
+        console.log("Sample data received");
+        let chart = [];
+        Object.keys(data.close).forEach((key) => {
+          chart.push({'price': data.close[key]});
+        });
+        this.setState({ 
+          loading: false,
+          ohlc: data,
+          chartData: chart
+        })
       })
-    });
+      .catch(e => console.log(`Error fetching sample segment: ${e}`))
   }
 
   fetchTA() {
     this.setState({loadingTA: true});
-    requestTA(this.state.ohlc, (err, data) => {
-      let taChart = [];
-      Object.keys(data.close).forEach((key) => {
-        taChart.push({'rsi': data[key]});
-      });
-      this.setState({ 
-        loadingTA: false,
-        taData: taChart
+    fetch('http://127.0.0.1:5000/ta-request', {
+      headers: {'Content-Type': 'application/json'},
+      method: 'POST',
+      body: JSON.stringify({'ohlcData': this.state.ohlc})
+    })
+      .then(r => r.json())
+      .then(data => {
+        let taChart = [];
+        Object.keys(data).forEach((key) => {
+          taChart.push({'rsi': data[key]});
+        });
+        this.setState({ 
+          loadingTA: false,
+          taData: taChart
+        })
       })
-    });
+      .catch(e => console.log(`Error fetching ta: ${e}`))
   }
 
   render() {

@@ -87,7 +87,7 @@ def get_rand_col(inputs, col):
     return np.stack(cols, axis=1), idxs
 
 
-if __name__ == '__main__':
+def run_model():
     inputs, prices = get_data('data/coinbase-1min.csv', 15)
     
     # genetic parameters
