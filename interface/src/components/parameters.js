@@ -1,8 +1,6 @@
 import React from 'react';
 import { Button, Slider, Row, Col, Checkbox } from 'antd';
-import {
-  ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer
-} from 'recharts';
+import LineChart from './linechart';
 
 class Parameters extends React.Component {
   state = {
@@ -49,13 +47,9 @@ class Parameters extends React.Component {
     })
       .then(r => r.json())
       .then(data => {
-        let taChart = [];
-        Object.keys(data).forEach((key) => {
-          taChart.push({'rsi': data[key]});
-        });
         this.setState({ 
           loadingTA: false,
-          taData: taChart
+          taData: data.results
         })
       })
       .catch(e => console.log(`Error fetching ta: ${e}`))
@@ -68,38 +62,8 @@ class Parameters extends React.Component {
     return (
       <div className="panel">
         <div style={{overflowX: "scroll", overflowY: "hidden", marginBottom: "1.2em" }}>
-          <div style={{ width: Math.max(data.length * 5, 1200), height: 400}}>
-            <ResponsiveContainer>
-            <ComposedChart 
-              data={data}
-              margin={{
-                top: 10, right: 30, left: 0, bottom: 0
-              }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis />
-              <YAxis domain={['dataMin', 'dataMax']}/>
-              <Line type="linear" dataKey="price" stroke="#8884d8" dot={false} />
-              <Scatter dataKey="buy" fill="green" />
-              <Scatter dataKey="sell" fill="red" />
-            </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-          <div style={{ width: Math.max(data.length * 3, 1200), height: 200}}>
-            <ResponsiveContainer>
-            <ComposedChart 
-              data={ta}
-              margin={{
-                top: 10, right: 30, left: 0, bottom: 0
-              }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis />
-              <YAxis domain={['dataMin', 'dataMax']}/>
-              <Line type="linear" dataKey="rsi" stroke="#8884d8" dot={false} />
-            </ComposedChart>
-            </ResponsiveContainer>
-          </div>
+          <LineChart dataKey={["price"]} chartData={data}/>
+          <LineChart dataKey={["RSI", "PPO"]} chartData={ta}/>
         </div>
         <Row>
           <Col span={2}>
