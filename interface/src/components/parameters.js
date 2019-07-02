@@ -8,11 +8,16 @@ class Parameters extends React.Component {
     loadingTA: false,
     chartData: null,
     ohlc: null,
-    sampleSize: 200
+    sampleSize: 200,
+    interval: 1
   }
 
   updateSampleSize = (e) => {
     this.setState({sampleSize: e})
+  }
+
+  updateInvBox = (idx) => {
+    this.setState({interval: idx})
   }
 
   fetchSample() {
@@ -20,7 +25,10 @@ class Parameters extends React.Component {
     fetch('http://127.0.0.1:5000/sample-request', {
       headers: {'Content-Type': 'application/json'},
       method: 'POST',
-      body: JSON.stringify({'sampleSize': this.state.sampleSize})
+      body: JSON.stringify({
+        'sampleSize': this.state.sampleSize,
+        'interval': this.state.interval
+      })
     })
       .then(r => r.json())
       .then(data => {
@@ -51,6 +59,7 @@ class Parameters extends React.Component {
           loadingTA: false,
           taData: data.results
         })
+        console.log(data);
       })
       .catch(e => console.log(`Error fetching ta: ${e}`))
   }
@@ -62,17 +71,18 @@ class Parameters extends React.Component {
     return (
       <div className="panel">
         <div style={{overflowX: "scroll", overflowY: "hidden", marginBottom: "1.2em" }}>
-          <LineChart dataKey={["price"]} chartData={data}/>
-          <LineChart dataKey={["RSI", "PPO"]} chartData={ta}/>
+          <LineChart dataKey={["price"]} chartData={data} height={400}/>
+          <LineChart dataKey={["RSI", "PPO"]} chartData={ta} height={200}/>
         </div>
         <Row>
-          <Col span={2}>
-            <p style={{marginTop: 7}}>Segment size:</p>
-          </Col>
-          <Col span={12}>
-            <Slider defaultValue={200} onChange={this.updateSampleSize} min={100} max={500}/>
-          </Col>
+          <Col span={2}><p style={{marginTop: 7}}>Segment size:</p></Col>
+          <Col span={12}><Slider defaultValue={200} onChange={this.updateSampleSize} min={100} max={500}/></Col>
         </Row>
+        <Checkbox checked={this.state.interval === 1} onChange={() => this.updateInvBox(1)} style={{color: 'white'}}>1min</Checkbox>
+        <Checkbox checked={this.state.interval === 5} onChange={() => this.updateInvBox(5)} style={{color: 'white'}}>5min</Checkbox>
+        <Checkbox checked={this.state.interval === 15} onChange={() => this.updateInvBox(15)} style={{color: 'white'}}>15min</Checkbox>
+        <Checkbox checked={this.state.interval === 30} onChange={() => this.updateInvBox(30)} style={{color: 'white'}}>30min</Checkbox>
+        <br/>
         <Button 
           ghost
           loading={this.state.loading}
