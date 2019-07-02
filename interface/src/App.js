@@ -19,11 +19,6 @@ class App extends React.Component {
   }
 
   render() {
-    const pageContent = [
-      <Parameters />,
-      <Chart />
-    ]
-
     return (
       <div className="App">
         <div className="header">

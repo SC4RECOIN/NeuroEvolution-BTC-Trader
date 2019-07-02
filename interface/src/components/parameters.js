@@ -9,15 +9,27 @@ class Parameters extends React.Component {
     chartData: null,
     ohlc: null,
     sampleSize: 200,
-    interval: 1
+    interval: 1,
+    taKeys: []
   }
 
   updateSampleSize = (e) => {
-    this.setState({sampleSize: e})
+    this.setState({sampleSize: e});
   }
 
   updateInvBox = (idx) => {
-    this.setState({interval: idx})
+    this.setState({interval: idx});
+  }
+
+  updateTa = (taKey) => {
+    let keys = this.state.taKeys;
+    const index = keys.indexOf(taKey);
+    if (index > -1){
+      keys.splice(index, 1);
+    } else {
+      keys.push(taKey);
+      this.setState({taKeys: keys});
+    }
   }
 
   fetchSample() {
@@ -71,7 +83,7 @@ class Parameters extends React.Component {
       <div className="panel">
         <div style={{overflowX: "scroll", overflowY: "hidden", marginBottom: "1.2em" }}>
           <LineChart dataKey={["price"]} chartData={data} height={400}/>
-          <LineChart dataKey={["RSI", "PPO"]} chartData={ta} height={200}/>
+          <LineChart dataKey={this.state.taKeys} chartData={ta} height={200}/>
         </div>
         <Row>
           <Col span={2}><p style={{marginTop: 7}}>Segment size:</p></Col>
@@ -94,16 +106,23 @@ class Parameters extends React.Component {
         <p style={{'fontSize': '1.6em'}}>Technical Analysis</p>
         <Row>
           <Col span={4}>
-            <Checkbox style={{color: 'white'}}>RSI</Checkbox><br/><br/>
-            <Checkbox style={{color: 'white'}}>PPO</Checkbox>
+            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("ER")}>ER</Checkbox><br/><br/>
+            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("PPO")}>PPO</Checkbox>
           </Col>
           <Col span={4}>
-            <Checkbox style={{color: 'white'}}>MACD</Checkbox><br/><br/>
-            <Checkbox style={{color: 'white'}}>ER</Checkbox>
+            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("STOCHRSI")}>STOCHRSI</Checkbox><br/><br/>
+            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("ADX")}>ADX</Checkbox>
             </Col>
           <Col span={4}>
-            <Checkbox style={{color: 'white'}}>CCI</Checkbox><br/><br/>
-            <Checkbox style={{color: 'white'}}>COPP</Checkbox>
+            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("RSI")}>RSI</Checkbox><br/><br/>
+            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("COPP")}>COPP</Checkbox>
+          </Col>
+          <Col span={4}>
+            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("CCI")}>CCI</Checkbox><br/><br/>
+            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("CHAIKIN")}>CHAIKIN</Checkbox>
+          </Col>
+          <Col span={4}>
+            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("FISH")}>FISH</Checkbox><br/><br/>
           </Col>
         </Row>
         <br/>
