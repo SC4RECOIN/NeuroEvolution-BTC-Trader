@@ -29,7 +29,7 @@ class LineChart extends React.Component {
     })
 
     return (
-      <div style={{ width: Math.max(data.length * 5, 1200), height: 400}}>
+      <div style={{ width: Math.max(data.length * 7, 1200), height: this.props.height}}>
         <ResponsiveContainer>
           <ComposedChart 
             data={data}
@@ -37,7 +37,7 @@ class LineChart extends React.Component {
               top: 10, right: 30, left: 0, bottom: 0
             }}
           >
-            {/* <CartesianGrid strokeDasharray="1" /> */}
+            <CartesianGrid strokeDasharray="1" stroke="rgb(42,41,40)" />
             <XAxis />
             <YAxis domain={['dataMin', 'dataMax']}/>
             {lineGraphs}

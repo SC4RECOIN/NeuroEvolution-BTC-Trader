@@ -59,7 +59,6 @@ class Parameters extends React.Component {
           loadingTA: false,
           taData: data.results
         })
-        console.log(data);
       })
       .catch(e => console.log(`Error fetching ta: ${e}`))
   }
