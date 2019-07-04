@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Slider, Row, Col, Checkbox } from 'antd';
 import LineChart from './linechart';
+import ModelParams from './modelparams';
 
 class Parameters extends React.Component {
   state = {
@@ -134,6 +135,8 @@ class Parameters extends React.Component {
         >
             Calculate TA
         </Button>
+        <hr style={{marginTop: "2em"}}/>
+        <ModelParams />
       </div>
     );
   }
