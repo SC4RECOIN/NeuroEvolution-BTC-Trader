@@ -66,6 +66,11 @@ def sample_request():
     return d.to_json()
 
 
+@app.route('/start-training', methods=['GET'])
+def sample_request():
+    return jsonify({"message": "training started"})
+
+
 def send_data(name, data):
     socketio.emit(name, json.dumps(data), broadcast=True)
 
