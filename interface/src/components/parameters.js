@@ -5,9 +5,11 @@ import ModelParams from './modelparams';
 
 class Parameters extends React.Component {
   state = {
+    modelIsTraining: false,
     loading: false,
     loadingTA: false,
     chartData: null,
+    taData: null,
     ohlc: null,
     sampleSize: 200,
     interval: 1,
@@ -75,6 +77,38 @@ class Parameters extends React.Component {
       })
       .catch(e => console.log(`Error fetching ta: ${e}`))
   }
+  
+  startTraining() {
+    this.setState({modelIsTraining: true});
+
+    // Pass TA selected by interface
+    let selectedTa = [];
+    this.state.taData.forEach((entry) => {
+      let row = [];
+      this.state.taKeys.forEach((key) => {
+        row.push(entry[key]);
+      })
+      selectedTa.push(row);
+    })
+
+    fetch('http://127.0.0.1:5000/start-training', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        'data': this.state.chartData,
+        'ta': selectedTa
+      })
+    })
+      .then(r => r.json())
+      .then(data => {
+        console.log(data.message);
+        this.setState({modelIsTraining: false});
+      })
+      .catch(e => {
+        console.log(`Error fetching ta: ${e}`);
+        this.setState({modelIsTraining: false});
+      })
+  }
 
   render() {
     const data = this.state.chartData || [];
@@ -136,7 +170,16 @@ class Parameters extends React.Component {
             Calculate TA
         </Button>
         <hr style={{marginTop: "2em"}}/>
-        <ModelParams />
+        <ModelParams/>
+        <hr style={{marginTop: "2em"}}/>
+        <Button 
+          ghost
+          loading={this.state.modelIsTraining}
+          style={{marginTop: "1em"}}  
+          onClick={() => this.startTraining()}
+        >
+          Train
+        </Button>
       </div>
     );
   }

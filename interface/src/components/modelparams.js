@@ -1,9 +1,8 @@
 import React from 'react';
-import { Button, Row, Col, Input, Icon } from 'antd';
+import { Row, Col, Input, Icon } from 'antd';
 
 class ModelParams extends React.Component {
   state = {
-    modelIsTraining: false,
     hiddenLayers: [],
     layerSize: ""
   }
@@ -24,14 +23,6 @@ class ModelParams extends React.Component {
     let layers = this.state.hiddenLayers;
     layers.pop();
     this.setState({hiddenLayers: layers});
-  }
-
-  startTraining() {
-    this.setState({modelIsTraining: true});
-    fetch('http://127.0.0.1:5000/start-training')
-      .then(r => r.json())
-      .then(data => console.log(data.message))
-      .catch(e => console.log(`Error fetching ta: ${e}`))
   }
 
   render() {
@@ -65,14 +56,6 @@ class ModelParams extends React.Component {
             </div>
           </Col>
         </Row>
-        <Button 
-          ghost
-          loading={this.state.modelIsTraining}
-          style={{marginTop: "1em"}}  
-          onClick={() => this.startTraining()}
-        >
-          Train
-        </Button>
       </div>
     );
   }
