@@ -42,12 +42,6 @@ def get_rand_segment(inputs, prices, size):
     return x, price
 
 
-def get_rand_col(inputs, col):
-    idxs = random.sample(range(inputs.shape[1]), col)
-    cols = [inputs[:, idx] for idx in idxs]
-    return np.stack(cols, axis=1), idxs
-
-
 def train_model(inputs, prices, send_data):
     # genetic parameters
     pop_size = 200
@@ -58,14 +52,12 @@ def train_model(inputs, prices, send_data):
 
     # rotate data to prevent overfitting
     data_rotation = 30
-    train_size, test_size = 5000, 2000
-    stagnation_limit = 125
+    rotate_data = False
 
     # network parameters
-    num_inputs = 4
     network_params = {
         'network': 'feedforward',
-        'input': num_inputs,
+        'input': inputs.shape[1],
         'hidden': [16, 32],
         'output': 2
     }
@@ -79,24 +71,9 @@ def train_model(inputs, prices, send_data):
                      mutation_decay,
                      socket_updater=send_data)
                      
-    partial_inputs, idxs = get_rand_col(inputs, num_inputs)
-    pop.model_json["ta_indexes"] = idxs
-
     g = 0
     while True:
-        if g % data_rotation == 0:
-            # grab three sets of data segments
-            train_data = [get_rand_segment(partial_inputs, prices, train_size) for i in range(3)]
-            x_test, price_test = get_rand_segment(partial_inputs, prices, test_size)
-
-        if pop.gen_stagnation > stagnation_limit:
-            partial_inputs, idxs = get_rand_col(inputs, num_inputs)
-            pop.model_json["ta_indexes"] = idxs
-            pop.initial_pop()
-            pop.gen_stagnation = 0
-
         pop.evolve()
-        gen_best = pop.run(train_data, fitness_callback=calculate_profit)
-        pop.test(x_test, price_test, fitness_callback=calculate_profit)
-        print(f'TA idx: {idxs}')
+        gen_best = pop.run((inputs, prices), fitness_callback=calculate_profit)
+        pop.test(inputs, prices, fitness_callback=calculate_profit)
         g += 1

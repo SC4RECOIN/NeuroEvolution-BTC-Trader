@@ -73,7 +73,7 @@ def start_training():
         socketio.emit(name, json.dumps(data), broadcast=True)
 
     prices = [item['price'] for item in request.json['data']]
-    Thread(target=train_model, args=(request.json['ta'], prices, send_data,)).run()
+    Thread(target=train_model, args=(np.array(request.json['ta']), prices, send_data,)).run()
     return jsonify({"message": "training started"})
 
 

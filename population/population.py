@@ -146,18 +146,9 @@ class Population(object):
         with tf.Session() as sess:
             if self.verbose: print('evaluating population....')
             for idx, genome in enumerate(self.genomes):
-                # list of tuples 
-                if type(data) is list:
-                    actions = [sess.run(genome.model.prediction, feed_dict={genome.model.X: seg[0]}) for seg in data]
-                    
-                    # return minimum score to discount random high scores
-                    scores = [fitness_callback(actions[idx], seg[1]) for idx, seg in enumerate(data)]
-                    genome.score = min(scores)
-                    genome.actions = actions[np.argmin(scores)]
-                    genome.prices = data[np.argmin(scores)][1]
-                else:
-                    genome.actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: data[0]})
-                    genome.score = fitness_callback(genome.actions, data[1])
+                genome.actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: data[0]})
+                genome.score = fitness_callback(genome.actions, data[1])
+                genome.prices = data[1]
                 
                 if self.verbose: self.print_progress(idx)
 
