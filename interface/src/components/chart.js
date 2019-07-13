@@ -29,7 +29,7 @@ class Chart extends React.Component {
     return (
       <div className="panel">
         <div style={{overflowX: "scroll", overflowY: "hidden", marginBottom: "1.2em" }}>
-          <div style={{ width: data.length * 3, height: 400}}>
+          <div style={{ width: Math.max(data.length * 7, 1200), height: 400}}>
             <ResponsiveContainer>
             <ComposedChart 
               data={data}
@@ -37,10 +37,10 @@ class Chart extends React.Component {
                 top: 10, right: 30, left: 0, bottom: 0
               }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="1" stroke="rgb(42,41,40)" />
               <XAxis />
               <YAxis domain={['dataMin', 'dataMax']}/>
-              <Line type="linear" dataKey="price" stroke="#8884d8" dot={false} />
+              <Line type="linear" dataKey="price" stroke="#AFD275" dot={false} />
               <Scatter dataKey="buy" fill="green" />
               <Scatter dataKey="sell" fill="red" />
             </ComposedChart>
