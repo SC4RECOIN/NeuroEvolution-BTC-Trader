@@ -48,7 +48,7 @@ def get_rand_col(inputs, col):
     return np.stack(cols, axis=1), idxs
 
 
-def train_model(inputs, prices):
+def train_model(inputs, prices, send_data):
     # genetic parameters
     pop_size = 200
     w_mutation_rate = 0.05
@@ -76,7 +76,8 @@ def train_model(inputs, prices):
                      mutation_scale,
                      w_mutation_rate,
                      b_mutation_rate,
-                     mutation_decay)
+                     mutation_decay,
+                     socket_updater=send_data)
                      
     partial_inputs, idxs = get_rand_col(inputs, num_inputs)
     pop.model_json["ta_indexes"] = idxs

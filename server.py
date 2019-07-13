@@ -4,7 +4,7 @@ from flask_cors import CORS
 from threading import Thread
 from sklearn.preprocessing import StandardScaler
 from utils.data import Data
-# from tf_evolution import train_model
+from tf_evolution import train_model
 from finta import TA
 import pandas as pd
 import numpy as np
@@ -69,13 +69,12 @@ def sample_request():
 
 @app.route('/start-training', methods=['POST'])
 def start_training():
+    def send_data(name, data):
+        socketio.emit(name, json.dumps(data), broadcast=True)
+
     prices = [item['price'] for item in request.json['data']]
-    Thread(target=train_model, args=(request.json['ta'], prices,))
+    Thread(target=train_model, args=(request.json['ta'], prices, send_data,)).run()
     return jsonify({"message": "training started"})
-
-
-def send_data(name, data):
-    socketio.emit(name, json.dumps(data), broadcast=True)
 
 
 socketio.run(app)
