@@ -1,12 +1,12 @@
 import React from 'react';
 import { Button, Slider, Row, Col, Checkbox } from 'antd';
-import LineChart from './linechart';
-import ModelParams from './modelparams';
+import LineChart from './lineChart';
+import ModelParams from './hiddenLayers';
 
-class Parameters extends React.Component {
+class ModelSetup extends React.Component {
   state = {
     modelIsTraining: false,
-    loading: false,
+    loadingPrices: false,
     loadingTA: false,
     chartData: null,
     taData: null,
@@ -52,7 +52,7 @@ class Parameters extends React.Component {
   }
 
   fetchSample() {
-    this.setState({loading: true});
+    this.setState({loadingPrices: true});
     fetch('http://127.0.0.1:5000/sample-request', {
       headers: {'Content-Type': 'application/json'},
       method: 'POST',
@@ -147,7 +147,7 @@ class Parameters extends React.Component {
         <br/>
         <Button 
           ghost
-          loading={this.state.loading}
+          loading={this.state.loadingPrices}
           style={{marginTop: "1em"}}  
           onClick={() => this.fetchSample()}
         >
@@ -205,4 +205,4 @@ class Parameters extends React.Component {
   }
 }
 
-export default Parameters;
+export default ModelSetup;

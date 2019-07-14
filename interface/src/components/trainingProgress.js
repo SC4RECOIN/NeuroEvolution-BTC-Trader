@@ -1,12 +1,12 @@
 import React from 'react';
-import Results from './results';
+import Results from './genResults';
 import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from 'recharts';
 
-import { genPriceUpdate } from './../socket';
+import { genPriceUpdate } from '../socket';
 
-class Chart extends React.Component {
+class TrainingProgress extends React.Component {
   constructor(props) {
     super(props);
 
@@ -54,4 +54,4 @@ class Chart extends React.Component {
   }
 }
 
-export default Chart;
+export default TrainingProgress;

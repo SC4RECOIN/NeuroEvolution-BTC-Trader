@@ -1,6 +1,6 @@
 import React from 'react';
-import Chart from './components/chart';
-import Parameters from './components/parameters';
+import TrainingProgress from './components/trainingProgress';
+import ModelSetup from './components/modelSetup';
 import { Carousel } from 'antd';
 
 
@@ -27,7 +27,7 @@ class App extends React.Component {
             onClick={() => this.setActivePage(0)}
             style={{backgroundColor: this.getTabColor(0)}}
           >
-              Training Parameters
+            Training Parameters
           </span>
           <span 
             className="header-item" 
@@ -38,8 +38,8 @@ class App extends React.Component {
           </span>
         </div>
         <Carousel ref={carousel => (this.carousel = carousel)}>
-          <Parameters />
-          <Chart />
+          <ModelSetup />
+          <TrainingProgress />
         </Carousel>
       </div>
     );

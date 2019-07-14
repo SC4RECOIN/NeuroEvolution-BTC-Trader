@@ -1,6 +1,6 @@
 import React from 'react';
 import { Row, Col } from 'antd';
-import {  genGenUpdate } from './../socket';
+import {  genGenUpdate } from '../socket';
 
 class Results extends React.Component {
   constructor(props) {
