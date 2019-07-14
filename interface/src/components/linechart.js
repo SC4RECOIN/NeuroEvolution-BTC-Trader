@@ -33,9 +33,7 @@ class LineChart extends React.Component {
         <ResponsiveContainer>
           <ComposedChart 
             data={data}
-            margin={{
-              top: 10, right: 30, left: 0, bottom: 0
-            }}
+            margin={{top: 10, right: 30, left: 0, bottom: 0}}
           >
             <CartesianGrid strokeDasharray="1" stroke="rgb(42,41,40)" />
             <XAxis />

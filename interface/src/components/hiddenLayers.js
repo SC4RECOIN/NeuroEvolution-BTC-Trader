@@ -1,7 +1,7 @@
 import React from 'react';
 import { Row, Col, Input, Icon } from 'antd';
 
-class ModelParams extends React.Component {
+class ModelLayers extends React.Component {
   state = {
     layerSize: ""
   }
@@ -43,4 +43,4 @@ class ModelParams extends React.Component {
   }
 }
 
-export default ModelParams;
+export default ModelLayers;

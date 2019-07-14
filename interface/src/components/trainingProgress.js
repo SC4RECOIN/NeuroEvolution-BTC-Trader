@@ -9,6 +9,9 @@ import { genPriceUpdate } from '../socket';
 class TrainingProgress extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      chartData: null
+    }
 
     genPriceUpdate((err, data) => {
       console.log("Data received");
@@ -17,10 +20,6 @@ class TrainingProgress extends React.Component {
         generationBest: data.generation
       })
     });
-  }
-    
-  state = {
-    chartData: null
   }
 
   render() {

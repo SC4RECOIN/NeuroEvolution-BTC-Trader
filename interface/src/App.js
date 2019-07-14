@@ -10,12 +10,12 @@ class App extends React.Component {
   }
 
   setActivePage(activePage) {
-    this.carousel.goTo(activePage)
+    this.carousel.goTo(activePage);
     this.setState({activeHeader: activePage})
   }
 
   getTabColor(idx) {
-    return this.state.activeHeader === idx ? "rgb(20, 20, 20)" : "rgb(32,31,30)"
+    return this.state.activeHeader === idx ? "rgb(20, 20, 20)" : "rgb(32,31,30)";
   }
 
   render() {

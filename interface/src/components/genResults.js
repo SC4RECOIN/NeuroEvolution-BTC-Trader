@@ -5,6 +5,10 @@ import {  genGenUpdate } from '../socket';
 class Results extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      genData: "",
+      generation: 0
+    }
 
     genGenUpdate((err, data) => {
       console.log("Gen data received");
@@ -15,11 +19,6 @@ class Results extends React.Component {
         generation: data.generation
       })
     });
-  }
-    
-  state = {
-    genData: "",
-    generation: 0
   }
 
   render() {

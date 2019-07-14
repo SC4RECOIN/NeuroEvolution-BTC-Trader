@@ -1,7 +1,12 @@
 import React from 'react';
+import styled from 'styled-components';
 import { Button, Slider, Row, Col, Checkbox } from 'antd';
 import LineChart from './lineChart';
-import ModelParams from './hiddenLayers';
+import ModelLayers from './hiddenLayers';
+
+const TaBox = styled(Checkbox)`
+  color: white;
+`;
 
 class ModelSetup extends React.Component {
   state = {
@@ -28,13 +33,12 @@ class ModelSetup extends React.Component {
   updateTa = (taKey) => {
     let keys = this.state.taKeys;
     const index = keys.indexOf(taKey);
-    if (index > -1){
+    if (index > -1) {
       keys.splice(index, 1);
     } else {
       keys.push(taKey);
       this.setState({taKeys: keys});
     }
-    console.log(this.state.taKeys.length)
   }
 
   addLayer = (layer) => {
@@ -140,10 +144,10 @@ class ModelSetup extends React.Component {
           <Col span={2}><p style={{marginTop: 7}}>Segment size:</p></Col>
           <Col span={12}><Slider defaultValue={200} onChange={this.updateSampleSize} min={100} max={500}/></Col>
         </Row>
-        <Checkbox checked={this.state.interval === 1} onChange={() => this.updateInvBox(1)} style={{color: 'white'}}>1min</Checkbox>
-        <Checkbox checked={this.state.interval === 5} onChange={() => this.updateInvBox(5)} style={{color: 'white'}}>5min</Checkbox>
-        <Checkbox checked={this.state.interval === 15} onChange={() => this.updateInvBox(15)} style={{color: 'white'}}>15min</Checkbox>
-        <Checkbox checked={this.state.interval === 30} onChange={() => this.updateInvBox(30)} style={{color: 'white'}}>30min</Checkbox>
+        <TaBox checked={this.state.interval === 1} onChange={() => this.updateInvBox(1)}>1min</TaBox>
+        <TaBox checked={this.state.interval === 5} onChange={() => this.updateInvBox(5)}>5min</TaBox>
+        <TaBox checked={this.state.interval === 15} onChange={() => this.updateInvBox(15)}>15min</TaBox>
+        <TaBox checked={this.state.interval === 30} onChange={() => this.updateInvBox(30)}>30min</TaBox>
         <br/>
         <Button 
           ghost
@@ -157,23 +161,23 @@ class ModelSetup extends React.Component {
         <p style={{'fontSize': '1.6em'}}>Technical Analysis</p>
         <Row>
           <Col span={4}>
-            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("ER")}>ER</Checkbox><br/><br/>
-            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("PPO")}>PPO</Checkbox>
+            <TaBox onChange={() => this.updateTa("ER")}>ER</TaBox><br/><br/>
+            <TaBox onChange={() => this.updateTa("PPO")}>PPO</TaBox>
           </Col>
           <Col span={4}>
-            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("STOCHRSI")}>STOCHRSI</Checkbox><br/><br/>
-            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("ADX")}>ADX</Checkbox>
-            </Col>
-          <Col span={4}>
-            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("RSI")}>RSI</Checkbox><br/><br/>
-            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("COPP")}>COPP</Checkbox>
+            <TaBox onChange={() => this.updateTa("STOCHRSI")}>STOCHRSI</TaBox><br/><br/>
+            <TaBox onChange={() => this.updateTa("ADX")}>ADX</TaBox>
           </Col>
           <Col span={4}>
-            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("CCI")}>CCI</Checkbox><br/><br/>
-            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("CHAIKIN")}>CHAIKIN</Checkbox>
+            <TaBox onChange={() => this.updateTa("RSI")}>RSI</TaBox><br/><br/>
+            <TaBox onChange={() => this.updateTa("COPP")}>COPP</TaBox>
           </Col>
           <Col span={4}>
-            <Checkbox style={{color: 'white'}} onChange={() => this.updateTa("FISH")}>FISH</Checkbox><br/><br/>
+            <TaBox onChange={() => this.updateTa("CCI")}>CCI</TaBox><br/><br/>
+            <TaBox onChange={() => this.updateTa("CHAIKIN")}>CHAIKIN</TaBox>
+          </Col>
+          <Col span={4}>
+            <TaBox onChange={() => this.updateTa("FISH")}>FISH</TaBox><br/><br/>
           </Col>
         </Row>
         <br/>
@@ -183,10 +187,10 @@ class ModelSetup extends React.Component {
           style={{marginTop: "1em"}}  
           onClick={() => this.fetchTA()}
         >
-            Calculate TA
+          Calculate TA
         </Button>
         <hr style={{marginTop: "2em"}}/>
-        <ModelParams 
+        <ModelLayers 
           addLayer={this.addLayer}
           removeLayer={this.removeLayer}
           layers={this.state.hiddenLayers}
