@@ -11,18 +11,18 @@ import numpy as np
 import json
 
 import logging
-log = logging.getLogger('werkzeug')
+log = logging.getLogger("werkzeug")
 log.setLevel(logging.ERROR)
 
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app)
-data = Data('data/coinbase-1min.csv')
+data = Data("data/coinbase-1min.csv")
 
 
-@app.route('/ta-request', methods=['POST'])
+@app.route("/ta-request", methods=["POST"])
 def get_sample_data():
-    ohlc = pd.DataFrame(request.json['ohlcData'])
+    ohlc = pd.DataFrame(request.json["ohlcData"])
     ta = [
         TA.ER(ohlc),
         TA.PPO(ohlc)["HISTO"],
@@ -60,21 +60,28 @@ def get_sample_data():
     ]})
 
 
-@app.route('/sample-request', methods=['POST'])
+@app.route("/sample-request", methods=["POST"])
 def sample_request():
-    sample_size = request.json['sampleSize']
+    sample_size = request.json["sampleSize"]
     d = data.get_rand_segment(sample_size)
     return d.to_json()
 
 
-@app.route('/start-training', methods=['POST'])
+@app.route("/start-training", methods=["POST"])
 def start_training():
-    def send_data(name, data):
+    def reporter(name, data):
         socketio.emit(name, json.dumps(data), broadcast=True)
 
-    prices = [item['price'] for item in request.json['data']]
-    Thread(target=train_model, args=(np.array(request.json['ta']), prices, send_data,)).run()
+    args = (
+        request.json["hiddenLayers"],
+        np.array(request.json["ta"]),
+        [item["price"] for item in request.json["data"]],
+        reporter,
+    )
+    
+    Thread(target=train_model, args=args).run()
     return jsonify({"message": "training started"})
 
 
-socketio.run(app)
+if __name__ == "__main__":
+    socketio.run(app)

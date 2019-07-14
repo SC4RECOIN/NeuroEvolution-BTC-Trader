@@ -42,7 +42,7 @@ def get_rand_segment(inputs, prices, size):
     return x, price
 
 
-def train_model(inputs, prices, send_data):
+def train_model(inputs, prices, reporter):
     # genetic parameters
     pop_size = 200
     w_mutation_rate = 0.05
@@ -69,7 +69,7 @@ def train_model(inputs, prices, send_data):
                      w_mutation_rate,
                      b_mutation_rate,
                      mutation_decay,
-                     socket_updater=send_data)
+                     socket_reporter=reporter)
                      
     g = 0
     while True:

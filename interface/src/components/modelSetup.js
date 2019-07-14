@@ -116,7 +116,8 @@ class ModelSetup extends React.Component {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         'data': this.state.chartData,
-        'ta': selectedTa
+        'ta': selectedTa,
+        'hiddenLayers': this.state.hiddenLayers
       })
     })
       .then(r => r.json())

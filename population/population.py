@@ -18,7 +18,7 @@ class Population(object):
                  breeding_ratio=0,
                  verbose=True,
                  clear_old_saves=True,
-                 socket_updater=None):
+                 socket_reporter=None):
 
         self.network_params = network_params
         self.population_size = pop_size
@@ -29,7 +29,7 @@ class Population(object):
         self.breeding_ratio = breeding_ratio
 
         self.verbose_load_bar = 25
-        self.socket_updater = socket_updater
+        self.socket_reporter = socket_reporter
         self.verbose = verbose
 
         self.genomes = self.initial_pop()
@@ -173,7 +173,7 @@ class Population(object):
                 'best_score': f"{max([x.score for x in self.genomes]):.2f}",
                 'record_score': f"{self.overall_best.score:.2f}",
             }
-            self.socket_updater('genResults', {'results': results, 'generation': self.gen})
+            self.socket_reporter('genResults', {'results': results, 'generation': self.gen})
             print(' ' * (self.verbose_load_bar + 3), end='\r')
             print(f"average score: {results['average_score']}%")
             print(f"best score: {results['best_score']}%")
@@ -204,7 +204,7 @@ class Population(object):
                 holding = True
                 graph_data[idx]['buy'] = f"{price:.3f}"
         
-        self.socket_updater('genUpdate', {'generation_trades': graph_data, 'generation': self.gen})
+        self.socket_reporter('genUpdate', {'generation_trades': graph_data, 'generation': self.gen})
 
     def print_progress(self, progress):
         progress = int((progress + 1)/len(self.genomes) * self.verbose_load_bar)
