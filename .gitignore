@@ -12,11 +12,11 @@ keys.py
 # ignore np files
 *.npy
 
-# live trading
-trade.py
-
 # csv price data
 *.csv
 
 # saved models
 model
+
+# react stuff
+node_modules
