@@ -3,27 +3,12 @@ import { Row, Col, Input, Icon } from 'antd';
 
 class ModelParams extends React.Component {
   state = {
-    hiddenLayers: [],
     layerSize: ""
   }
 
   onChange = e => {
     this.setState({layerSize: e.target.value});
   };
-
-  addLayer = () => {
-    let layers = this.state.hiddenLayers;
-    layers.push(this.state.layerSize);
-    if (this.state.layerSize !== "") {
-      this.setState({hiddenLayers: layers});
-    }
-  }
-
-  removeLayer = () => {
-    let layers = this.state.hiddenLayers;
-    layers.pop();
-    this.setState({hiddenLayers: layers});
-  }
 
   render() {
     return (
@@ -41,21 +26,18 @@ class ModelParams extends React.Component {
           </Col>
           <Col span={1}>
             <div className="add-layer"> 
-              <Icon type="plus-square" onClick={this.addLayer}/>
+              <Icon type="plus-square" onClick={() => this.props.addLayer(this.state.layerSize)}/>
             </div>
           </Col>
           <Col span={1}>
             <div className="remove-layer">
-              <Icon type="minus-square" onClick={this.removeLayer}
+              <Icon type="minus-square" onClick={this.props.removeLayer}
               />
             </div>
           </Col>
         </Row>
-        <Row>
-          <p>Inputs: {this.props.numInputs}</p>
-          <p>Hidden Layers: {this.state.hiddenLayers.join(', ')}</p>
-          <p>Outputs: 2</p>
-        </Row>
+        <p>Hidden Layers:</p>
+        {this.props.layers.length === 0 ? <p style={{color: "red"}}>EMPTY</p> : <p>{this.props.layers.join(', ')}</p>}
       </div>
     );
   }

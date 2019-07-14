@@ -13,7 +13,8 @@ class Parameters extends React.Component {
     ohlc: null,
     sampleSize: 200,
     interval: 1,
-    taKeys: []
+    taKeys: [],
+    hiddenLayers: []
   }
 
   updateSampleSize = (e) => {
@@ -34,6 +35,20 @@ class Parameters extends React.Component {
       this.setState({taKeys: keys});
     }
     console.log(this.state.taKeys.length)
+  }
+
+  addLayer = (layer) => {
+    if (layer.length !== 0) {
+      let layers = this.state.hiddenLayers;
+      layers.push(layer);
+      this.setState({hiddenLayers: layers});
+    }
+  }
+
+  removeLayer = () => {
+    let layers = this.state.hiddenLayers;
+    layers.pop();
+    this.setState({hiddenLayers: layers});
   }
 
   fetchSample() {
@@ -171,7 +186,11 @@ class Parameters extends React.Component {
             Calculate TA
         </Button>
         <hr style={{marginTop: "2em"}}/>
-        <ModelParams numInputs={this.state.taKeys.length}/>
+        <ModelParams 
+          addLayer={this.addLayer}
+          removeLayer={this.removeLayer}
+          layers={this.state.hiddenLayers}
+        />
         <hr style={{marginTop: "2em"}}/>
         <Button 
           ghost
