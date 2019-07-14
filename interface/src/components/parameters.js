@@ -33,6 +33,7 @@ class Parameters extends React.Component {
       keys.push(taKey);
       this.setState({taKeys: keys});
     }
+    console.log(this.state.taKeys.length)
   }
 
   fetchSample() {
@@ -170,7 +171,7 @@ class Parameters extends React.Component {
             Calculate TA
         </Button>
         <hr style={{marginTop: "2em"}}/>
-        <ModelParams/>
+        <ModelParams numInputs={this.state.taKeys.length}/>
         <hr style={{marginTop: "2em"}}/>
         <Button 
           ghost

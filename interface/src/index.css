@@ -53,12 +53,24 @@ code {
   color: white;
 }
 
-.layerIcon {
-  margin-left: 1em;
+.add-layer, .remove-layer {
+  margin-left: 2.5em;
   font-size: 1.5em; 
   cursor: pointer;
 }
 
-.layerIcon:hover {
-  margin-top: -.05em;
+.add-layer {
+  color: rgba(5, 85, 14);
+}
+
+.add-layer:hover {
+  color: rgba(5, 150, 14);
+}
+
+.remove-layer {
+  color: rgb(97, 16, 5);
+}
+
+.remove-layer:hover {
+  color: rgb(149, 19, 7);
 }

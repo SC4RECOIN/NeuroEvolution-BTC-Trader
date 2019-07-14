@@ -30,7 +30,7 @@ class ModelParams extends React.Component {
       <div>
         <p style={{'fontSize': '1.6em'}}>Model</p>
         <p>Add hidden layer</p>
-        <Row>
+        <Row style={{marginBottom: "2em"}}>
           <Col span={2}>
             <Input
               type="number"
@@ -40,21 +40,21 @@ class ModelParams extends React.Component {
             />
           </Col>
           <Col span={1}>
-            <div className="layerIcon" style={{color: "green"}}> 
-              <Icon 
-                type="plus-square" 
-                onClick={this.addLayer}
-              />
+            <div className="add-layer"> 
+              <Icon type="plus-square" onClick={this.addLayer}/>
             </div>
           </Col>
           <Col span={1}>
-            <div className="layerIcon" style={{color: "red"}}>
-              <Icon 
-                type="minus-square" 
-                onClick={this.removeLayer}
+            <div className="remove-layer">
+              <Icon type="minus-square" onClick={this.removeLayer}
               />
             </div>
           </Col>
+        </Row>
+        <Row>
+          <p>Inputs: {this.props.numInputs}</p>
+          <p>Hidden Layers: {this.state.hiddenLayers.join(', ')}</p>
+          <p>Outputs: 2</p>
         </Row>
       </div>
     );
