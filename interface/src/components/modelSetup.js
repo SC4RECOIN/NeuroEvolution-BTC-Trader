@@ -16,7 +16,7 @@ class ModelSetup extends React.Component {
     chartData: null,
     taData: null,
     ohlc: null,
-    sampleSize: 200,
+    sampleSize: 350,
     interval: 1,
     taKeys: [],
     hiddenLayers: []
@@ -73,7 +73,7 @@ class ModelSetup extends React.Component {
           chart.push({'price': data.close[key]});
         });
         this.setState({ 
-          loading: false,
+          loadingPrices: false,
           ohlc: data,
           chartData: chart
         })
@@ -143,7 +143,7 @@ class ModelSetup extends React.Component {
         </div>
         <Row>
           <Col span={2}><p style={{marginTop: 7}}>Segment size:</p></Col>
-          <Col span={12}><Slider defaultValue={200} onChange={this.updateSampleSize} min={100} max={500}/></Col>
+          <Col span={12}><Slider defaultValue={this.state.sampleSize} onChange={this.updateSampleSize} min={100} max={500}/></Col>
         </Row>
         <TaBox checked={this.state.interval === 1} onChange={() => this.updateInvBox(1)}>1min</TaBox>
         <TaBox checked={this.state.interval === 5} onChange={() => this.updateInvBox(5)}>5min</TaBox>

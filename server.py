@@ -73,7 +73,7 @@ def start_training():
         socketio.emit(name, json.dumps(data), broadcast=True)
 
     args = (
-        request.json["hiddenLayers"],
+        [int(x) for x in request.json["hiddenLayers"]],
         np.array(request.json["ta"]),
         [item["price"] for item in request.json["data"]],
         reporter,

@@ -42,7 +42,7 @@ def get_rand_segment(inputs, prices, size):
     return x, price
 
 
-def train_model(inputs, prices, reporter):
+def train_model(layers, inputs, prices, reporter):
     # genetic parameters
     pop_size = 200
     w_mutation_rate = 0.05
@@ -58,7 +58,7 @@ def train_model(inputs, prices, reporter):
     network_params = {
         'network': 'feedforward',
         'input': inputs.shape[1],
-        'hidden': [16, 32],
+        'hidden': layers,
         'output': 2
     }
 
