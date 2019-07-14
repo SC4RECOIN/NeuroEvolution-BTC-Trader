@@ -26,6 +26,10 @@ def calculate_profit(trades, prices):
             holding = True
             btc_wallet = usd_wallet / prices[idx] * (1 - fee)
 
+    # sell if holding
+    if holding:
+        usd_wallet = btc_wallet * prices[-1] * (1 - fee)
+
     # discourage models that dont trade
     if usd_wallet == starting_cash:
         return -100.
