@@ -1,12 +1,22 @@
 import React from 'react';
 import TrainingProgress from './components/trainingProgress';
 import ModelSetup from './components/modelSetup';
-import { Carousel } from 'antd';
+import { Carousel, Modal } from 'antd';
+import { onConnectionError } from './socket'
 
 
 class App extends React.Component {
-  state = {
-    activeHeader: 0
+  constructor(props) {
+    super(props);
+    this.state = {
+      activeHeader: 0,
+      modalVisible: false
+    }
+
+    onConnectionError(() => {
+      console.log("Connection Error!");
+      this.setState({modalVisible: true});
+    });
   }
 
   setActivePage(activePage) {
@@ -18,9 +28,21 @@ class App extends React.Component {
     return this.state.activeHeader === idx ? "rgb(20, 20, 20)" : "rgb(32,31,30)";
   }
 
+  handleOk = e => {
+    this.setState({ modalVisible: false });
+  };
+
   render() {
     return (
       <div className="App">
+        <Modal
+          title="Connection Error!"
+          visible={this.state.modalVisible}
+          onOk={this.handleOk}
+          onCancel={this.handleOk}
+        >
+          <p>You need to start the python backend</p>
+        </Modal>
         <div className="header">
           <span 
             className="header-item" 
