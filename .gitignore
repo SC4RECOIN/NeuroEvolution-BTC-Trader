@@ -3,6 +3,7 @@ keys.py
 
 # cache files
 *.pyc
+__pycache__
 
 # do not upload models
 *.dump

@@ -17,68 +17,39 @@ log.setLevel(logging.ERROR)
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app)
-data = Data("data/coinbase-1min.csv")
 
 
-@app.route("/ta-request", methods=["POST"])
-def get_sample_data():
-    ohlc = pd.DataFrame(request.json["ohlcData"])
-    ta = [
-        TA.ER(ohlc),
-        TA.PPO(ohlc)["HISTO"],
-        TA.STOCHRSI(ohlc),
-        TA.ADX(ohlc),
-        TA.RSI(ohlc),
-        TA.COPP(ohlc),
-        TA.CCI(ohlc),
-        TA.CHAIKIN(ohlc),
-        TA.FISH(ohlc)
-    ]
-
-    ta = np.array(ta).transpose()
-    ta[np.isnan(ta)] = 0
-    ta[np.isinf(ta)] = 0
-
-    # scale them to the same range
-    scaler = StandardScaler()
-    scaler.fit(ta)
-    ta = scaler.transform(ta)
-    
-    # reformat for rechart.js
-    return jsonify({
-        "results": [{
-            "ER": row[0],
-            "PPO": row[1],
-            "STOCHRSI": row[2],
-            "ADX": row[3],
-            "RSI": row[4],
-            "COPP": row[5],
-            "CCI": row[6],
-            "CHAIKIN": row[7],
-            "FISH": row[8],
-        } for row in ta
-    ]})
+print('Loading data and calculating TA...')
+data = Data("data/coinbase-1min.csv", interval=5)
 
 
-@app.route("/sample-request", methods=["POST"])
+@app.route("/data-sample-request", methods=["POST"])
 def sample_request():
+    print('sample data request received')
+
+    # update ohlc and TA to reflect interval
+    inv = int(request.json["interval"])
+    if inv != data.interval:
+        data.interval = inv
+
     sample_size = request.json["sampleSize"]
-    d = data.get_rand_segment(sample_size)
-    return d.to_json()
+    ohlc, ta = data.get_rand_segment(sample_size)
+    close_col = ohlc.columns.get_loc('close')
+
+    return jsonify({
+        "closing": [{"price": p} for p in ohlc.values[:, close_col]],
+        "ta": data.to_dict(ta)
+    })
 
 
 @app.route("/start-training", methods=["POST"])
 def start_training():
+    ta_keys = request.json["taKeys"]
+    hidden_layers = [int(x) for x in request.json["hiddenLayers"]]
     def reporter(name, data):
         socketio.emit(name, json.dumps(data), broadcast=True)
 
-    args = (
-        [int(x) for x in request.json["hiddenLayers"]],
-        np.array(request.json["ta"]),
-        [item["price"] for item in request.json["data"]],
-        reporter,
-    )
-    
+    args = (hidden_layers, data.ta, data.ohlc, reporter,)
     Thread(target=train_model, args=args).run()
     return jsonify({"message": "training started"})
 

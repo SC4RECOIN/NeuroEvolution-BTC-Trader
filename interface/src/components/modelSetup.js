@@ -11,13 +11,11 @@ const TaBox = styled(Checkbox)`
 class ModelSetup extends React.Component {
   state = {
     modelIsTraining: false,
-    loadingPrices: false,
-    loadingTA: false,
+    loadingData: false,
     chartData: null,
     taData: null,
-    ohlc: null,
     sampleSize: 350,
-    interval: 1,
+    interval: 5,
     taKeys: [],
     hiddenLayers: []
   }
@@ -56,8 +54,8 @@ class ModelSetup extends React.Component {
   }
 
   fetchSample() {
-    this.setState({loadingPrices: true});
-    fetch('http://127.0.0.1:5000/sample-request', {
+    this.setState({loadingData: true});
+    fetch('http://127.0.0.1:5000/data-sample-request', {
       headers: {'Content-Type': 'application/json'},
       method: 'POST',
       body: JSON.stringify({
@@ -68,56 +66,24 @@ class ModelSetup extends React.Component {
       .then(r => r.json())
       .then(data => {
         console.log("Sample data received");
-        let chart = [];
-        Object.keys(data.close).forEach((key) => {
-          chart.push({'price': data.close[key]});
-        });
         this.setState({ 
-          loadingPrices: false,
-          ohlc: data,
-          chartData: chart
+          loadingData: false,
+          chartData: data.closing,
+          taData: data.ta
         })
       })
       .catch(e => console.log(`Error fetching sample segment: ${e}`))
-  }
-
-  fetchTA() {
-    this.setState({loadingTA: true});
-    fetch('http://127.0.0.1:5000/ta-request', {
-      headers: {'Content-Type': 'application/json'},
-      method: 'POST',
-      body: JSON.stringify({'ohlcData': this.state.ohlc})
-    })
-      .then(r => r.json())
-      .then(data => {
-        this.setState({ 
-          loadingTA: false,
-          taData: data.results
-        })
-      })
-      .catch(e => console.log(`Error fetching ta: ${e}`))
   }
   
   startTraining() {
     this.setState({modelIsTraining: true});
 
-    // Pass TA selected by interface
-    let selectedTa = [];
-    this.state.taData.forEach((entry) => {
-      let row = [];
-      this.state.taKeys.forEach((key) => {
-        row.push(entry[key]);
-      })
-      selectedTa.push(row);
-    })
-
     fetch('http://127.0.0.1:5000/start-training', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        'data': this.state.chartData,
-        'ta': selectedTa,
-        'hiddenLayers': this.state.hiddenLayers
+        'hiddenLayers': this.state.hiddenLayers,
+        'taKeys': this.state.taKeys
       })
     })
       .then(r => r.json())
@@ -152,7 +118,7 @@ class ModelSetup extends React.Component {
         <br/>
         <Button 
           ghost
-          loading={this.state.loadingPrices}
+          loading={this.state.loadingData}
           style={{marginTop: "1em"}}  
           onClick={() => this.fetchSample()}
         >
