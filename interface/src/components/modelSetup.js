@@ -35,8 +35,8 @@ class ModelSetup extends React.Component {
       keys.splice(index, 1);
     } else {
       keys.push(taKey);
-      this.setState({taKeys: keys});
     }
+    this.setState({taKeys: keys});
   }
 
   addLayer = (layer) => {
