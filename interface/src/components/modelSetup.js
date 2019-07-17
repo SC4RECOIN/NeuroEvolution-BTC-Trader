@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Button, Slider, Row, Col, Checkbox } from 'antd';
+import { Button, Slider, Row, Col, Checkbox,Popover } from 'antd';
 import LineChart from './lineChart';
 import ModelLayers from './hiddenLayers';
 
@@ -77,7 +77,6 @@ class ModelSetup extends React.Component {
   
   startTraining() {
     this.setState({modelIsTraining: true});
-
     fetch('http://127.0.0.1:5000/start-training', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -95,6 +94,42 @@ class ModelSetup extends React.Component {
         console.log(`Error fetching ta: ${e}`);
         this.setState({modelIsTraining: false});
       })
+  }
+
+  getTrainButton() {
+    const button = (
+      <Button 
+        ghost
+        disabled={!this.state.chartData || this.state.taKeys.length === 0 || this.state.hiddenLayers.length === 0}
+        loading={this.state.modelIsTraining}
+        style={{marginTop: "1em", color: "white"}}  
+        onClick={() => this.startTraining()}
+      >
+        Train
+      </Button> 
+    )
+
+    if (this.state.chartData === null) {
+      return (
+        <Popover title="Cannot start training" placement="topLeft" content="You need to get data segment for training">
+          {button}
+        </Popover>
+      )
+    } else if (this.state.taKeys.length === 0) {
+      return (
+        <Popover title="Cannot start training" placement="topLeft" content="You need to select TA for model inputs">
+          {button}
+        </Popover>
+      )
+    } else if (this.state.hiddenLayers.length === 0) {
+      return (
+        <Popover title="Cannot start training" placement="topLeft" content="You need to add hidden layers to your model">
+          {button}
+        </Popover>
+      )
+    }
+
+    return button;
   }
 
   render() {
@@ -147,15 +182,6 @@ class ModelSetup extends React.Component {
             <TaBox onChange={() => this.updateTa("FISH")}>FISH</TaBox><br/><br/>
           </Col>
         </Row>
-        <br/>
-        <Button 
-          ghost
-          loading={this.state.loadingTA}
-          style={{marginTop: "1em"}}  
-          onClick={() => this.fetchTA()}
-        >
-          Calculate TA
-        </Button>
         <hr style={{marginTop: "2em"}}/>
         <ModelLayers 
           addLayer={this.addLayer}
@@ -163,14 +189,7 @@ class ModelSetup extends React.Component {
           layers={this.state.hiddenLayers}
         />
         <hr style={{marginTop: "2em"}}/>
-        <Button 
-          ghost
-          loading={this.state.modelIsTraining}
-          style={{marginTop: "1em"}}  
-          onClick={() => this.startTraining()}
-        >
-          Train
-        </Button>
+        {this.getTrainButton()}
       </div>
     );
   }
