@@ -33,6 +33,15 @@ class Data(object):
         self.last_index = (rand_idx, rand_idx + size)
         
         return self.ohlc[rand_idx:rand_idx + size], self.ta[rand_idx:rand_idx + size]
+
+    def get_closing(self):
+        close_col = self.ohlc.columns.get_loc('close')
+        return self.ohlc.values[:, close_col]
+
+    def get_training_segment(self):
+        inputs = self.ta[self.last_index[0]:self.last_index[1]]
+        closing = self.get_closing()[self.last_index[0]:self.last_index[1]]
+        return inputs, closing
     
     def calc_ta(self):
         ta = [

@@ -50,7 +50,8 @@ def start_training():
     def reporter(name, data):
         socketio.emit(name, json.dumps(data), broadcast=True)
 
-    args = (hidden_layers, data.ta, data.get_closing(), reporter,)
+    ta, closing = data.get_training_segment()
+    args = (hidden_layers, ta, closing, reporter,)
     Thread(target=train_model, args=args).run()
     return jsonify({"message": "training started"})
 

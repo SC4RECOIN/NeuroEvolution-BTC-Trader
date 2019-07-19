@@ -1,6 +1,3 @@
-# this file contains the api key and secret for my account
-keys.py
-
 # cache files
 *.pyc
 __pycache__
@@ -21,3 +18,4 @@ model
 
 # react stuff
 node_modules
+build
