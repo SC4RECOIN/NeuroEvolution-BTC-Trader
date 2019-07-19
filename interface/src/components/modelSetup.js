@@ -24,6 +24,10 @@ class ModelSetup extends React.Component {
     this.setState({sampleSize: e});
   }
 
+  updateEvolutionParam = (e) => {
+    console.log(e);
+  }
+
   updateInvBox = (idx) => {
     this.setState({interval: idx});
   }
@@ -183,11 +187,34 @@ class ModelSetup extends React.Component {
           </Col>
         </Row>
         <hr style={{marginTop: "2em"}}/>
-        <ModelLayers 
-          addLayer={this.addLayer}
-          removeLayer={this.removeLayer}
-          layers={this.state.hiddenLayers}
-        />
+        <Row>
+          <Col span={8}>
+            <ModelLayers 
+              addLayer={this.addLayer}
+              removeLayer={this.removeLayer}
+              layers={this.state.hiddenLayers}
+            />
+          </Col>
+          <Col span={12}>
+            <p style={{'fontSize': '1.6em'}}>Evolution Parameters</p>
+            <Row>
+              <Col span={6}><p style={{marginTop: 7}}>% Mutation Rate (weights):</p></Col>
+              <Col span={12}><Slider defaultValue={5} onChange={this.updateEvolutionParam} min={1} max={20}/></Col>
+            </Row>
+            <Row>
+              <Col span={6}><p style={{marginTop: 7}}>% Mutation Rate (bias):</p></Col>
+              <Col span={12}><Slider defaultValue={0} onChange={this.updateEvolutionParam} min={1} max={20}/></Col>
+            </Row>
+            <Row>
+              <Col span={6}><p style={{marginTop: 7}}>% Mutation Scale:</p></Col>
+              <Col span={12}><Slider defaultValue={30} onChange={this.updateEvolutionParam} min={10} max={60}/></Col>
+            </Row>
+            <Row>
+              <Col span={6}><p style={{marginTop: 7}}>% Mutation Decay:</p></Col>
+              <Col span={12}><Slider defaultValue={1} onChange={this.updateEvolutionParam} min={0} max={10}/></Col>
+            </Row>
+          </Col>
+        </Row>
         <hr style={{marginTop: "2em"}}/>
         {this.getTrainButton()}
       </div>
