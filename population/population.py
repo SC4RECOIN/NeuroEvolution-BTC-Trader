@@ -147,7 +147,7 @@ class Population(object):
                 genome.prices = data[1]
                 
                 self.print_progress(idx)
-                self.socket_reporter("genProgress", {"progress": int(idx+1/self.population_size*100)})
+                self.socket_reporter("genProgress", {"progress": int((idx+1)/self.population_size*100)})
 
         tf.reset_default_graph()
         self.gen_stagnation += 1

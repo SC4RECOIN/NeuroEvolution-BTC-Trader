@@ -49,22 +49,13 @@ def get_rand_segment(inputs, prices, size):
 def train_model(layers, 
                 inputs, 
                 prices,
+                pop_size=150,
+                data_rotation=0,
                 w_mutation_rate = 0.05,
                 b_mutation_rate = 0.0,
                 mutation_scale = 0.3,
                 mutation_decay = 1.,
                 reporter=None):
-    # genetic parameters
-    pop_size = 200
-    w_mutation_rate = 0.05
-    b_mutation_rate = 0.0
-    mutation_scale = 0.3
-    mutation_decay = 1.
-
-    # rotate data to prevent overfitting
-    data_rotation = 30
-    rotate_data = False
-
     # network parameters
     network_params = {
         'network': 'feedforward',
@@ -84,6 +75,10 @@ def train_model(layers,
                      
     g = 0
     while True:
+        if g % data_rotation:
+            # need to rotate data here
+            pass 
+
         pop.evolve()
         gen_best = pop.run((inputs, prices), fitness_callback=calculate_profit)
         g += 1
