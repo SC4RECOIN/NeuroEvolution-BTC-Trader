@@ -45,14 +45,21 @@ def sample_request():
 
 @app.route("/start-training", methods=["POST"])
 def start_training():
+    # evolution params
+    mrw = request.json["mutationRateW"]
+    mrb = request.json["mutationRateB"]
+    ms = request.json["mutationScale"]
+    md = request.json["mutationDecay"]
+
     ta_keys = request.json["taKeys"]
     hidden_layers = [int(x) for x in request.json["hiddenLayers"]]
     def reporter(name, data):
         socketio.emit(name, json.dumps(data), broadcast=True)
 
     ta, closing = data.get_training_segment()
-    args = (hidden_layers, ta, closing, reporter,)
+    args = (hidden_layers, ta, closing, mrw, mrb, ms, md, reporter,)
     Thread(target=train_model, args=args).run()
+    
     return jsonify({"message": "training started"})
 
 

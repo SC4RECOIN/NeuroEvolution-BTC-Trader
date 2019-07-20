@@ -46,7 +46,14 @@ def get_rand_segment(inputs, prices, size):
     return x, price
 
 
-def train_model(layers, inputs, prices, reporter):
+def train_model(layers, 
+                inputs, 
+                prices,
+                w_mutation_rate = 0.05,
+                b_mutation_rate = 0.0,
+                mutation_scale = 0.3,
+                mutation_decay = 1.,
+                reporter=None):
     # genetic parameters
     pop_size = 200
     w_mutation_rate = 0.05
