@@ -1,8 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Button, Slider, Row, Col, Checkbox,Popover } from 'antd';
+import { Button, Slider, Row, Col, Checkbox, Popover } from 'antd';
 import LineChart from './lineChart';
 import ModelLayers from './hiddenLayers';
+import TA from './ta'
 
 const TaBox = styled(Checkbox)`
   color: white;
@@ -17,15 +18,19 @@ class ModelSetup extends React.Component {
     sampleSize: 350,
     interval: 5,
     taKeys: [],
-    hiddenLayers: []
+    hiddenLayers: [],
+    mrw: 5,
+    mrb: 0,
+    ms: 30,
+    md: 1,
   }
 
   updateSampleSize = (e) => {
     this.setState({sampleSize: e});
   }
 
-  updateEvolutionParam = (e) => {
-    console.log(e);
+  updateEvolutionParams = (e) => {
+    this.setState(e);
   }
 
   updateInvBox = (idx) => {
@@ -86,7 +91,11 @@ class ModelSetup extends React.Component {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         'hiddenLayers': this.state.hiddenLayers,
-        'taKeys': this.state.taKeys
+        'taKeys': this.state.taKeys,
+        'mutationRateW': this.state.mrw/100,
+        'mutationRateB': this.state.mrb/100,
+        'mutationScale': this.state.ms/100,
+        'mutationDecay': 1 - (this.state.md*0.001)
       })
     })
       .then(r => r.json())
@@ -164,28 +173,7 @@ class ModelSetup extends React.Component {
             Get Random Segment
         </Button>
         <hr style={{marginTop: "2em"}}/>
-        <p style={{'fontSize': '1.6em'}}>Technical Analysis</p>
-        <Row>
-          <Col span={4}>
-            <TaBox onChange={() => this.updateTa("ER")}>ER</TaBox><br/><br/>
-            <TaBox onChange={() => this.updateTa("PPO")}>PPO</TaBox>
-          </Col>
-          <Col span={4}>
-            <TaBox onChange={() => this.updateTa("STOCHRSI")}>STOCHRSI</TaBox><br/><br/>
-            <TaBox onChange={() => this.updateTa("ADX")}>ADX</TaBox>
-          </Col>
-          <Col span={4}>
-            <TaBox onChange={() => this.updateTa("RSI")}>RSI</TaBox><br/><br/>
-            <TaBox onChange={() => this.updateTa("COPP")}>COPP</TaBox>
-          </Col>
-          <Col span={4}>
-            <TaBox onChange={() => this.updateTa("CCI")}>CCI</TaBox><br/><br/>
-            <TaBox onChange={() => this.updateTa("CHAIKIN")}>CHAIKIN</TaBox>
-          </Col>
-          <Col span={4}>
-            <TaBox onChange={() => this.updateTa("FISH")}>FISH</TaBox><br/><br/>
-          </Col>
-        </Row>
+        <TA updateTa={this.updateTa} />
         <hr style={{marginTop: "2em"}}/>
         <Row>
           <Col span={8}>
@@ -199,19 +187,19 @@ class ModelSetup extends React.Component {
             <p style={{'fontSize': '1.6em'}}>Evolution Parameters</p>
             <Row>
               <Col span={6}><p style={{marginTop: 7}}>% Mutation Rate (weights):</p></Col>
-              <Col span={12}><Slider defaultValue={5} onChange={this.updateEvolutionParam} min={1} max={20}/></Col>
+              <Col span={12}><Slider defaultValue={this.state.mrw} onChange={(e) => this.updateEvolutionParams({mrw: e})} min={1} max={20}/></Col>
             </Row>
             <Row>
               <Col span={6}><p style={{marginTop: 7}}>% Mutation Rate (bias):</p></Col>
-              <Col span={12}><Slider defaultValue={0} onChange={this.updateEvolutionParam} min={1} max={20}/></Col>
+              <Col span={12}><Slider defaultValue={this.state.mrb} onChange={(e) => this.updateEvolutionParams({mrb: e})} min={1} max={20}/></Col>
             </Row>
             <Row>
               <Col span={6}><p style={{marginTop: 7}}>% Mutation Scale:</p></Col>
-              <Col span={12}><Slider defaultValue={30} onChange={this.updateEvolutionParam} min={10} max={60}/></Col>
+              <Col span={12}><Slider defaultValue={this.state.ms} onChange={(e) => this.updateEvolutionParams({ms: e})} min={10} max={60}/></Col>
             </Row>
             <Row>
               <Col span={6}><p style={{marginTop: 7}}>% Mutation Decay:</p></Col>
-              <Col span={12}><Slider defaultValue={1} onChange={this.updateEvolutionParam} min={0} max={10}/></Col>
+              <Col span={12}><Slider defaultValue={this.state.md} onChange={(e) => this.updateEvolutionParams({md: e})} min={0} max={10}/></Col>
             </Row>
           </Col>
         </Row>

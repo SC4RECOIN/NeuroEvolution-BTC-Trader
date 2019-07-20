@@ -16,7 +16,6 @@ class Population(object):
                  b_mutation_rate=0,
                  mutation_decay=1.0,
                  breeding_ratio=0,
-                 verbose=True,
                  clear_old_saves=True,
                  socket_reporter=None):
 
@@ -28,9 +27,8 @@ class Population(object):
         self.mutation_decay = mutation_decay
         self.breeding_ratio = breeding_ratio
 
-        self.verbose_load_bar = 25
+        self.load_bar_len = 25
         self.socket_reporter = socket_reporter
-        self.verbose = verbose
 
         self.genomes = self.initial_pop()
         self.overall_best = self.genomes[0]
@@ -53,8 +51,7 @@ class Population(object):
             os.mkdir('model')
 
     def initial_pop(self):
-        if self.verbose:
-            print(f"{'=' * self.verbose_load_bar}\ncreating genesis population")
+        print(f"{'=' * self.load_bar_len}\ncreating genesis population")
 
         return [
             Genome(i, self.network_params,
@@ -70,8 +67,8 @@ class Population(object):
         if self.gen == 1:
             return
 
-        if self.verbose:
-            print(f"{'=' * self.verbose_load_bar}\ncreating population {self.gen}")
+        self.socket_reporter("genProgress", {"progress": 0})
+        print(f"{'=' * self.load_bar_len}\ncreating population {self.gen}")
 
         # find fitness by normalizing score
         self.normalize_score()
@@ -91,12 +88,11 @@ class Population(object):
                                    parent_1=self.genomes[p1],
                                    parent_2=self.genomes[p2] if np.random.random() < self.breeding_ratio else None))
 
-            if self.verbose:
-                progress = int((idx + 1)/len(parents_1) * self.verbose_load_bar)
-                progress_left = self.verbose_load_bar - progress
-                print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
-
-        if self.verbose: print(' ' * (self.verbose_load_bar + 3), end='\r')
+        progress = int((idx + 1)/len(parents_1) * self.load_bar_len)
+        progress_left = self.load_bar_len - progress
+        print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
+        print(' ' * (self.load_bar_len + 3), end='\r')
+        
         self.genomes = children
 
         # mutation scale will decay over time
@@ -144,13 +140,14 @@ class Population(object):
 
         # open session and evaluate population
         with tf.Session() as sess:
-            if self.verbose: print('evaluating population....')
+            print('evaluating population....')
             for idx, genome in enumerate(self.genomes):
                 genome.actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: data[0]})
                 genome.score = fitness_callback(genome.actions, data[1])
                 genome.prices = data[1]
                 
-                if self.verbose: self.print_progress(idx)
+                self.print_progress(idx)
+                self.socket_reporter("genProgress", {"progress": int(idx+1/self.population_size*100)})
 
         tf.reset_default_graph()
         self.gen_stagnation += 1
@@ -167,19 +164,21 @@ class Population(object):
             with open(f'model/gen_{self.gen}/params.json', 'w') as f:
                 json.dump(self.model_json, f, indent=4)
 
-        if self.verbose:
-            results = {
-                'average_score': f"{np.average(np.array([x.score for x in self.genomes])):.2f}",
-                'best_score': f"{max([x.score for x in self.genomes]):.2f}",
-                'record_score': f"{self.overall_best.score:.2f}",
-            }
+        results = {
+            'average_score': f"{np.average(np.array([x.score for x in self.genomes])):.2f}",
+            'best_score': f"{max([x.score for x in self.genomes]):.2f}",
+            'record_score': f"{self.overall_best.score:.2f}",
+            'hold': f"{(data[1][-1] / data[1][0]  - 1) * 100:.2f}"
+        }
+        print(' ' * (self.load_bar_len + 3), end='\r')
+        print(f"average score: {results['average_score']}%")
+        print(f"best score: {results['best_score']}%")
+        print(f"record score: {results['record_score']}%")
+        print(f"stagnation: {self.gen_stagnation}")
+        print('time: {0:.2f}s'.format(time() - start))
+
+        if self.socket_reporter is not None:
             self.socket_reporter('genResults', {'results': results, 'generation': self.gen})
-            print(' ' * (self.verbose_load_bar + 3), end='\r')
-            print(f"average score: {results['average_score']}%")
-            print(f"best score: {results['best_score']}%")
-            print(f"record score: {results['record_score']}%")
-            print(f"stagnation: {self.gen_stagnation}")
-            print('time: {0:.2f}s'.format(time() - start))
 
         return self.gen_best
 
@@ -204,9 +203,11 @@ class Population(object):
                 holding = True
                 graph_data[idx]['buy'] = f"{price:.3f}"
         
-        self.socket_reporter('genUpdate', {'generation_trades': graph_data, 'generation': self.gen})
+        
+        if self.socket_reporter is not None:
+            self.socket_reporter('genUpdate', {'generation_trades': graph_data, 'generation': self.gen})
 
     def print_progress(self, progress):
-        progress = int((progress + 1)/len(self.genomes) * self.verbose_load_bar)
-        progress_left = self.verbose_load_bar - progress
+        progress = int((progress + 1)/len(self.genomes) * self.load_bar_len)
+        progress_left = self.load_bar_len - progress
         print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')

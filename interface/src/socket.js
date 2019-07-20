@@ -13,8 +13,13 @@ function genGenUpdate(cb) {
   socket.on('genResults', data => cb(null, JSON.parse(data)));
 }
 
+function genGenProgress(cb) {
+  socket.on('genProgress', data => cb(null, JSON.parse(data)));
+}
+
 export { 
   onConnectionError,
   genPriceUpdate, 
-  genGenUpdate
+  genGenUpdate,
+  genGenProgress
 };
