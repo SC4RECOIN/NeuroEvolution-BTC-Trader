@@ -1,11 +1,12 @@
 import React from 'react';
 import { Row, Col, Progress } from 'antd';
-import { genGenUpdate, genGenProgress } from '../socket';
+import { genGenUpdate, genGenProgress } from '../../socket';
 
 class Results extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      generation: 0,
       progress: 0
     }
 

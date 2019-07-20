@@ -4,7 +4,7 @@ import {
   ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from 'recharts';
 
-import { genPriceUpdate } from '../socket';
+import { genPriceUpdate } from '../../socket';
 
 class TrainingProgress extends React.Component {
   constructor(props) {

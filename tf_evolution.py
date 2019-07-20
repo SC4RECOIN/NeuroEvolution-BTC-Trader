@@ -86,5 +86,4 @@ def train_model(layers,
     while True:
         pop.evolve()
         gen_best = pop.run((inputs, prices), fitness_callback=calculate_profit)
-        pop.test(inputs, prices, fitness_callback=calculate_profit)
         g += 1

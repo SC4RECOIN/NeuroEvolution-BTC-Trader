@@ -1,6 +1,6 @@
 import React from 'react';
-import TrainingProgress from './components/trainingProgress';
-import ModelSetup from './components/modelSetup';
+import TrainingProgress from './components/progress/trainingProgress';
+import ModelSetup from './components/setup/modelSetup';
 import { Carousel, Modal } from 'antd';
 import { onConnectionError } from './socket'
 
