@@ -1,13 +1,13 @@
 import React from 'react';
-import { Row, Col, Input, Icon } from 'antd';
+import { Row, Col, InputNumber, Icon } from 'antd';
 
 class ModelLayers extends React.Component {
   state = {
     layerSize: ""
   }
 
-  onChange = e => {
-    this.setState({layerSize: e.target.value});
+  onChange = value => {
+    this.setState({layerSize: value});
   };
 
   render() {
@@ -17,8 +17,7 @@ class ModelLayers extends React.Component {
         <p>Add hidden layer</p>
         <Row style={{marginBottom: "2em"}}>
           <Col span={6}>
-            <Input
-              type="number"
+            <InputNumber 
               onChange={this.onChange}
               placeholder="size"
               style={{backgroundColor: "rgb(20, 20, 20)", color: "white"}}

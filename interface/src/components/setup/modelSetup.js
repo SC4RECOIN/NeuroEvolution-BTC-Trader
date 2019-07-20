@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Button, Slider, Row, Col, Checkbox, Popover } from 'antd';
+import { Button, Slider, Row, Col, Checkbox, Popover, InputNumber, Icon } from 'antd';
 import LineChart from './lineChart';
 import ModelLayers from './hiddenLayers';
 import TA from './ta';
@@ -20,6 +20,8 @@ class ModelSetup extends React.Component {
     interval: 5,
     taKeys: [],
     hiddenLayers: [],
+    popSize: 100,
+    dataRotation: 50,
     mrw: 5,
     mrb: 0,
     ms: 30,
@@ -38,6 +40,14 @@ class ModelSetup extends React.Component {
     this.setState({interval: idx});
   }
 
+  updatePopSize = (value) => {
+    this.setState({popSize: value});
+  }
+
+  updateRotation = (value) => {
+    this.setState({dataRotation: value});
+  }
+
   updateTa = (taKey) => {
     let keys = this.state.taKeys;
     const index = keys.indexOf(taKey);
@@ -50,7 +60,7 @@ class ModelSetup extends React.Component {
   }
 
   addLayer = (layer) => {
-    if (layer.length !== 0) {
+    if (layer.length !== 0 && !isNaN(layer)) {
       let layers = this.state.hiddenLayers;
       layers.push(layer);
       this.setState({hiddenLayers: layers});
@@ -93,6 +103,8 @@ class ModelSetup extends React.Component {
       body: JSON.stringify({
         'hiddenLayers': this.state.hiddenLayers,
         'taKeys': this.state.taKeys,
+        'popSize': this.state.popSize,
+        'dataRotation': this.state.dataRotation,
         'mutationRateW': this.state.mrw/100,
         'mutationRateB': this.state.mrb/100,
         'mutationScale': this.state.ms/100,
@@ -184,10 +196,37 @@ class ModelSetup extends React.Component {
               layers={this.state.hiddenLayers}
             />
           </Col>
-          <Col span={12}>
+          <Col span={8}>
             <EvolutionParams 
               defaults={[this.state.mrw, this.state.mrb, this.state.ms, this.state.md]} 
               update={this.updateEvolutionParams} 
+            />
+          </Col>
+          <Col span={8}>
+            <p style={{'fontSize': '1.6em'}}>Population</p>
+            <p>Size</p>
+            <InputNumber
+              onChange={this.updatePopSize}
+              defaultValue={this.state.popSize}
+              style={{backgroundColor: "rgb(20, 20, 20)", color: "white"}}
+            />
+            <p style={{marginTop: "1.5em"}}>Data Rotation&nbsp;
+              <Popover 
+                title="Data Rotation" 
+                content={
+                  <div>
+                    <p>The number of generations the data is used for training before a new segment is randomly chosen. This helps with overfitting.</p>
+                    <p>Setting to zero with disable data rotation</p>
+                  </div>
+                }
+              >
+                <Icon type="question-circle" />
+              </Popover>
+            </p>
+            <InputNumber
+              onChange={this.updateRotation}
+              defaultValue={this.state.dataRotation}
+              style={{backgroundColor: "rgb(20, 20, 20)", color: "white"}}
             />
           </Col>
         </Row>
