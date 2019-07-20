@@ -3,7 +3,8 @@ import styled from 'styled-components';
 import { Button, Slider, Row, Col, Checkbox, Popover } from 'antd';
 import LineChart from './lineChart';
 import ModelLayers from './hiddenLayers';
-import TA from './ta'
+import TA from './ta';
+import EvolutionParams from './evolutionParams';
 
 const TaBox = styled(Checkbox)`
   color: white;
@@ -184,23 +185,10 @@ class ModelSetup extends React.Component {
             />
           </Col>
           <Col span={12}>
-            <p style={{'fontSize': '1.6em'}}>Evolution Parameters</p>
-            <Row>
-              <Col span={6}><p style={{marginTop: 7}}>% Mutation Rate (weights):</p></Col>
-              <Col span={12}><Slider defaultValue={this.state.mrw} onChange={(e) => this.updateEvolutionParams({mrw: e})} min={1} max={20}/></Col>
-            </Row>
-            <Row>
-              <Col span={6}><p style={{marginTop: 7}}>% Mutation Rate (bias):</p></Col>
-              <Col span={12}><Slider defaultValue={this.state.mrb} onChange={(e) => this.updateEvolutionParams({mrb: e})} min={1} max={20}/></Col>
-            </Row>
-            <Row>
-              <Col span={6}><p style={{marginTop: 7}}>% Mutation Scale:</p></Col>
-              <Col span={12}><Slider defaultValue={this.state.ms} onChange={(e) => this.updateEvolutionParams({ms: e})} min={10} max={60}/></Col>
-            </Row>
-            <Row>
-              <Col span={6}><p style={{marginTop: 7}}>% Mutation Decay:</p></Col>
-              <Col span={12}><Slider defaultValue={this.state.md} onChange={(e) => this.updateEvolutionParams({md: e})} min={0} max={10}/></Col>
-            </Row>
+            <EvolutionParams 
+              defaults={[this.state.mrw, this.state.mrb, this.state.ms, this.state.md]} 
+              update={this.updateEvolutionParams} 
+            />
           </Col>
         </Row>
         <hr style={{marginTop: "2em"}}/>
