@@ -51,13 +51,17 @@ def start_training():
     ms = request.json["mutationScale"]
     md = request.json["mutationDecay"]
 
+    # population params
+    size = request.json["popSize"]
+    rotation = request.json["dataRotation"]
+
     ta_keys = request.json["taKeys"]
     hidden_layers = [int(x) for x in request.json["hiddenLayers"]]
     def reporter(name, data):
         socketio.emit(name, json.dumps(data), broadcast=True)
 
     ta, closing = data.get_training_segment()
-    args = (hidden_layers, ta, closing, mrw, mrb, ms, md, reporter,)
+    args = (hidden_layers, ta, closing, size, rotation, mrw, mrb, ms, md, reporter,)
     Thread(target=train_model, args=args).run()
     
     return jsonify({"message": "training started"})
