@@ -1,9 +1,10 @@
 from population.genome import Genome
 from population.network import Network
-from tensorflow.keras.models import load_model, model_from_json
 from time import time
 import numpy as np
 import tensorflow as tf
+import shutil, os
+import json
 
 
 class Population(object):
@@ -15,7 +16,8 @@ class Population(object):
                  b_mutation_rate=0,
                  mutation_decay=1.0,
                  breeding_ratio=0,
-                 verbose=True):
+                 clear_old_saves=True,
+                 socket_reporter=None):
 
         self.network_params = network_params
         self.population_size = pop_size
@@ -25,34 +27,48 @@ class Population(object):
         self.mutation_decay = mutation_decay
         self.breeding_ratio = breeding_ratio
 
-        self.verbose_load_bar = 25
-        self.verbose = verbose
+        self.load_bar_len = 25
+        self.socket_reporter = socket_reporter
 
         self.genomes = self.initial_pop()
         self.overall_best = self.genomes[0]
+        self.gen_stagnation = 0
         self.gen_best = self.genomes[0]
+        self.gen = 0
+
+        self.model_json = {
+            "network_params": self.network_params,
+            "population_size": self.population_size,
+            "w_mutation_rate": self.w_mutation_rate,
+            "b_mutation_rate": self.b_mutation_rate,
+            "mutation_scale": self.mutation_scale,
+            "mutation_decay": self.mutation_decay,
+            "breeding_ratio": self.breeding_ratio,
+        }
+
+        if clear_old_saves:
+            shutil.rmtree('model') 
+            os.mkdir('model')
 
     def initial_pop(self):
-        if self.verbose:
-            print('{0}\ncreating genisis population'.format('='*self.verbose_load_bar))
+        print(f"{'=' * self.load_bar_len}\ncreating genesis population")
 
-        genomes = []
-        for i in range(self.population_size):
-            genomes.append(Genome(i,
-                                  self.network_params,
-                                  self.mutation_scale,
-                                  self.w_mutation_rate,
-                                  self.b_mutation_rate))
+        return [
+            Genome(i, self.network_params,
+                   self.mutation_scale,
+                   self.w_mutation_rate,
+                   self.b_mutation_rate) 
+            for i in range(self.population_size)
+        ]
 
-        return genomes
-
-    def evolve(self, g):
-        # genisis population
-        if g == 0:
+    def evolve(self):
+        # genesis population
+        self.gen += 1
+        if self.gen == 1:
             return
 
-        if self.verbose:
-            print('{0}\ncreating population {1}'.format('='*self.verbose_load_bar, g+1))
+        self.socket_reporter("genProgress", {"progress": 0})
+        print(f"{'=' * self.load_bar_len}\ncreating population {self.gen}")
 
         # find fitness by normalizing score
         self.normalize_score()
@@ -62,58 +78,21 @@ class Population(object):
         parents_2 = self.pool_selection()
         children = []
 
-        if self.network_params['network'] == 'feedforward':
-            # create next generation
-            for idx, (p1, p2) in enumerate(zip(parents_1, parents_2)):
-                if np.random.random() < self.breeding_ratio:
-                    # breeding
-                    children.append(Genome(idx,
-                                           self.network_params,
-                                           self.mutation_scale,
-                                           self.w_mutation_rate,
-                                           self.b_mutation_rate,
-                                           parent_1=self.genomes[p1],
-                                           parent_2=self.genomes[p2]))
-                else:
-                    # mutating
-                    children.append(Genome(idx,
-                                           self.network_params,
-                                           self.mutation_scale,
-                                           self.w_mutation_rate,
-                                           self.b_mutation_rate,
-                                           parent_1=self.genomes[p1]))
+        # create next generation
+        for idx, (p1, p2) in enumerate(zip(parents_1, parents_2)):
+            children.append(Genome(idx,
+                                   self.network_params,
+                                   self.mutation_scale,
+                                   self.w_mutation_rate,
+                                   self.b_mutation_rate,
+                                   parent_1=self.genomes[p1],
+                                   parent_2=self.genomes[p2] if np.random.random() < self.breeding_ratio else None))
 
-                if self.verbose:
-                    progress = int((idx + 1)/len(parents_1) * self.verbose_load_bar)
-                    progress_left = self.verbose_load_bar - progress
-                    print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
-
-        # evolving keras network
-        else:
-            # temporarily save models and clear session
-            configs, weights = [], []
-            for p1 in parents_1:
-                configs.append(self.genomes[p1].model.prediction.to_json())
-                weights.append(self.genomes[p1].model.prediction.get_weights())
-
-            tf.keras.backend.clear_session()
-
-            # reload models
-            for idx, (config, weight) in enumerate(zip(configs, weights)):
-                loaded = model_from_json(config)
-                loaded.set_weights(weight)
-                children.append(Genome(idx,
-                                       self.network_params,
-                                       self.mutation_scale,
-                                       self.w_mutation_rate,
-                                       self.b_mutation_rate,
-                                       load_keras=loaded))
-                if self.verbose:
-                    progress = int((idx + 1)/len(parents_1) * self.verbose_load_bar)
-                    progress_left = self.verbose_load_bar - progress
-                    print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
-
-        if self.verbose: print(' ' * (self.verbose_load_bar + 3), end='\r')
+        progress = int((idx + 1)/len(parents_1) * self.load_bar_len)
+        progress_left = self.load_bar_len - progress
+        print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')
+        print(' ' * (self.load_bar_len + 3), end='\r')
+        
         self.genomes = children
 
         # mutation scale will decay over time
@@ -156,72 +135,79 @@ class Population(object):
 
         return idx_arr
 
-    def run(self, inputs, outputs, fitness_callback):
+    def run(self, data, fitness_callback):
         start = time()
 
-        if self.network_params['network'] == 'feedforward':
-            # open session and evaluate population
-            with tf.Session() as sess:
-                if self.verbose: print('evaluating population....')
-                for idx, genome in enumerate(self.genomes):
-                    actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: inputs})
-                    genome.score = fitness_callback(actions, outputs)
-                    if self.verbose: self.print_progress(idx)
-
-            tf.reset_default_graph()
-
-        else:
-            if self.verbose: print('evaluating population....')
-
-            # reshape data for each network type
-            if self.network_params['network'] == 'convolutional':
-                inputs = inputs[:,:, np.newaxis]
-            elif self.network_params['network'] == 'recurrent':
-                timesteps = self.network_params['timesteps']
-                inputs = np.array([inputs[i - timesteps:i] for i in range(timesteps, inputs.shape[0] + 1)])
-                outputs = outputs[timesteps - 1:]
-
+        # open session and evaluate population
+        with tf.Session() as sess:
+            print('evaluating population....')
             for idx, genome in enumerate(self.genomes):
-                actions = genome.model.prediction.predict(inputs)
-                genome.score = fitness_callback(actions, outputs)
-                if self.verbose: self.print_progress(idx)
+                genome.actions = sess.run(genome.model.prediction, feed_dict={genome.model.X: data[0]})
+                genome.score = fitness_callback(genome.actions, data[1])
+                genome.prices = data[1]
+                
+                self.print_progress(idx)
+                self.socket_reporter("genProgress", {"progress": int((idx+1)/self.population_size*100)})
+
+        tf.reset_default_graph()
+        self.gen_stagnation += 1
 
         # evaluate best model in generation and overall
         self.gen_best = self.genomes[np.argmax([x.score for x in self.genomes])]
-        if self.gen_best.score > self.overall_best.score: self.overall_best = self.gen_best
+        if self.gen_best.score > self.overall_best.score: 
+            self.overall_best = self.gen_best
+            self.send_best_trading_data()
+            self.gen_best.save(f"gen_{self.gen}")
+            self.model_json["fitness"] = self.gen_best.score
+            self.gen_stagnation = 0
+            
+            with open(f'model/gen_{self.gen}/params.json', 'w') as f:
+                json.dump(self.model_json, f, indent=4)
 
-        if self.verbose:
-            print(' ' * (self.verbose_load_bar + 3), end='\r')
-            print('average score: {0:.2f}%'.format(np.average(np.array([x.score for x in self.genomes]))))
-            print('best score: {0:.2f}%'.format(max([x.score for x in self.genomes])))
-            print('record score: {0:.2f}%'.format(self.overall_best.score))
-            print('time: {0:.2f}s'.format(time() - start))
+        results = {
+            'average_score': f"{np.average(np.array([x.score for x in self.genomes])):.2f}",
+            'best_score': f"{max([x.score for x in self.genomes]):.2f}",
+            'record_score': f"{self.overall_best.score:.2f}",
+            'hold': f"{(data[1][-1] / data[1][0]  - 1) * 100:.2f}"
+        }
+        print(' ' * (self.load_bar_len + 3), end='\r')
+        print(f"average score: {results['average_score']}%")
+        print(f"best score: {results['best_score']}%")
+        print(f"record score: {results['record_score']}%")
+        print(f"stagnation: {self.gen_stagnation}")
+        print('time: {0:.2f}s'.format(time() - start))
+
+        if self.socket_reporter is not None:
+            self.socket_reporter('genResults', {'results': results, 'generation': self.gen})
 
         return self.gen_best
 
     def test(self, inputs, outputs, fitness_callback, to_test='gen_best'):
-        if self.network_params['network'] == 'feedforward':
-            model = Network(0, self.gen_best)
-            with tf.Session() as sess:
-                actions = sess.run(model.prediction, feed_dict={model.X: inputs})
-                print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
+        model = Network(0, self.gen_best)
+        with tf.Session() as sess:
+            actions = sess.run(model.prediction, feed_dict={model.X: inputs})
+            print('test score: {0:.2f}%\t(hold: {1:.2f}%)'.format(fitness_callback(actions, outputs), (outputs[-1]/outputs[0]-1)*100))
 
-            tf.reset_default_graph()
+        tf.reset_default_graph()
 
-        # built using tf.keras
-        else:
-            # reshape data for each network type
-            if self.network_params['network'] == 'convolutional':
-                inputs = inputs[:,:, np.newaxis]
-            elif self.network_params['network'] == 'recurrent':
-                timesteps = self.network_params['timesteps']
-                inputs = np.array([inputs[i - timesteps:i] for i in range(timesteps, inputs.shape[0] + 1)])
-                outputs = outputs[timesteps - 1:]
-
-            actions = self.gen_best.model.prediction.predict(inputs)
-            print('test score: {0:.2f}%'.format(fitness_callback(actions, outputs)))
+    def send_best_trading_data(self):
+        # send to interface
+        graph_data = [{'price': f'{price:.3f}'} for price in self.overall_best.prices]
+        holding = False
+        for idx, trade in enumerate(self.overall_best.actions):
+            price = self.overall_best.prices[idx]
+            if holding and not np.argmax(trade):
+                holding = False
+                graph_data[idx]['sell'] = f"{price:.3f}"
+            if not holding and np.argmax(trade):
+                holding = True
+                graph_data[idx]['buy'] = f"{price:.3f}"
+        
+        
+        if self.socket_reporter is not None:
+            self.socket_reporter('genUpdate', {'generation_trades': graph_data, 'generation': self.gen})
 
     def print_progress(self, progress):
-        progress = int((progress + 1)/len(self.genomes) * self.verbose_load_bar)
-        progress_left = self.verbose_load_bar - progress
+        progress = int((progress + 1)/len(self.genomes) * self.load_bar_len)
+        progress_left = self.load_bar_len - progress
         print('[{0}>{1}]'.format('=' * progress, ' ' * progress_left), end='\r')

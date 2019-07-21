@@ -1,6 +1,7 @@
 from population.network import Network
 import numpy as np
 import copy
+import os
 
 
 class Genome(object):
@@ -11,11 +12,12 @@ class Genome(object):
                  w_mutation_rate,
                  b_mutation_rate,
                  parent_1=None,
-                 parent_2=None,
-                 load_keras=None):
+                 parent_2=None):
 
         # fitness is score normalized
         self.fitness = 0
+        self.actions = None
+        self.prices = []
         self.score = 0
         self.id = id
 
@@ -27,12 +29,6 @@ class Genome(object):
         self.hidden = network_params['hidden']
         self.outputs = network_params['output']
         self.network = network_params['network']
-        self.model = None
-        self.timesteps = None
-
-        if 'timesteps' not in network_params:
-            raise AttributeError('Must specify timesteps for recurrent network')
-        else: self.timesteps = network_params['timesteps']
 
         self.w_mutation_rate = w_mutation_rate
         self.b_mutation_rate = b_mutation_rate
@@ -56,15 +52,9 @@ class Genome(object):
             self.mutate_b_feedforward()
             self.mutated = True
 
-        elif load_keras is not None:
-            self.model = Network(self.id, self, load_keras=load_keras)
-            self.mutate_w_keras()
-
         # initial values when population is first created
         else: self.init_w_b()
-
-        # pass genome to network object
-        if load_keras is None: self.model = Network(self.id, self)
+        self.model = Network(self.id, self)
 
     def init_w_b(self):
         # create weights and bias for first hidden layer
@@ -89,25 +79,6 @@ class Genome(object):
                 if np.random.random() < self.w_mutation_rate:
                     self.weights[i][j][k] += np.random.normal(scale=self.mutation_scale) * 0.5
 
-    def mutate_w_keras(self):
-        weights = self.model.prediction.get_weights()
-
-        # iterate through layers
-        for i, layers in enumerate(weights):
-            for index, x in np.ndenumerate(layers):
-                # randomly mutate weight
-                if np.random.random() < self.w_mutation_rate:
-
-                    # how much to mutate by
-                    mutation = np.random.normal(scale=self.mutation_scale) * 0.5
-
-                    # depending on shape of np.array
-                    if len(index) == 3: weights[i][index[0]][index[1]][index[2]] += mutation
-                    elif len(index) == 2: weights[i][index[0]][index[1]] += mutation
-                    else: weights[i][index[0]] += mutation
-
-        self.model.prediction.set_weights(weights)
-
     def mutate_b_feedforward(self):
         # iterate through layers
         for i, layers in enumerate(self.biases):
@@ -128,14 +99,13 @@ class Genome(object):
 
         # should assign designated biases as well
 
-    def save(self, save_folder='model/'):
-        if self.network == 'feedforward':
-            for i, layers in enumerate(self.weights):
-                np.save(save_folder + 'weights{}'.format(i), layers)
+    def save(self, model_name, save_folder='model/'):
+        path = save_folder + model_name
+        if not os.path.exists(path):
+            os.mkdir(path)
 
-            for i, layers in enumerate(self.biases):
-                np.save(save_folder + 'biases{}'.format(i), layers)
+        for i, layers in enumerate(self.weights):
+            np.save(path + '/weights{}'.format(i), layers)
 
-        else:
-            np.save(save_folder + 'keras_model.h5', self.model.prediction.to_json())
-            np.save(save_folder + 'keras_weights.h5', self.model.prediction.get_weights())
+        for i, layers in enumerate(self.biases):
+            np.save(path + '/biases{}'.format(i), layers)

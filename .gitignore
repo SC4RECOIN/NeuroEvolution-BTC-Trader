@@ -1,8 +1,6 @@
-# this file contains the api key and secret for my account
-keys.py
-
 # cache files
 *.pyc
+__pycache__
 
 # do not upload models
 *.dump
@@ -12,8 +10,12 @@ keys.py
 # ignore np files
 *.npy
 
-# live trading
-trade.py
+# csv price data
+*.csv
 
-# not my class
-binance_helper.py
+# saved models
+model
+
+# react stuff
+node_modules
+build
