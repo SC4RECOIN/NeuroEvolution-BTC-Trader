@@ -1,5 +1,5 @@
 python-socketio
-tensorflow-gpu
+tensorflow
 scikit-learn
 numpy
 pandas

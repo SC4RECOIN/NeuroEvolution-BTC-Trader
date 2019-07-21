@@ -21,46 +21,20 @@ python server.py
 
 ## Usage  
 
-Using the trading framework is very easy. All you need to do is specify the mutation rate, mutation scale, and network parameters. This is passed into the _Population()_ object which constructs a population with the given parameters. In _pop.evolve()_ the fitness of each model is used in a pooling algorithm to decide which models to use in the next generation. The models are then copied over to the next generation and randomly mutated based on the _w_mutation_rate_ parameter. In _pop.run()_ the models are fed inputs and the fitness is assigned based on how it performs in the fitness callback. The best model is saved and tested and the whole process starts over again until the desired amount of generations is achieved.
+Using the trading framework is very easy. All you need to do is select the TA you would like to use and specify the model parameters. This is passed to the Python backend which constructs a population of models with the given parameters. The fitness of each model is used in a pooling algorithm to decide which models to use after each generation. The models are then copied over to the next generation and randomly mutated depending on the selected mutation parameters.  
 
-```python
-# genetic parameters
-pop_size = 25
-w_mutation_rate = 0.05
-mutation_scale = 0.3
-generations = 25
+The interface will show the progress and stats of each generation. It will graph the results of the overall best model and where it traded.  
 
-# network parameters
-network_params = {
-    'network': 'feedforward',
-    'input': 5,
-    'hidden': [16, 16, 16],
-    'output': 2
-}
+### Data
 
-# build initial population
-pop = Population(network_params,
-                 pop_size,
-                 mutation_scale,
-                 w_mutation_rate,)
-
-# run for set number of generations
-for g in range(generations):
-    pop.evolve(g)
-    gen_best = pop.run(inputs_train, price_train, fitness_callback=calculate_profit)
-    pop.test(inputs_test, price_test, fitness_callback=calculate_profit)
-    gen_best.save()
+The application expects a CSV of OHLC prices in 1-min intervals with column headers in the data folder. The provided data file is data from Coinbase from 2017-2019
+The format should be as follows:
 ```
-
-### Population parameters  
-
-- network_params: This is a dictionary that specifies network parameters
-- pop_size: This is the size of the population that will be used through each generation
-- mutation_scale: This is the scale of the mutation if a weight is being mutated
-- w_mutation_rate: This is the change a weight will be mutated when iterating over the weights
-- b_mutation_rate=0: This is the change a bias will be mutated when iterating over the biases (experimental)
-- mutation_decay=1.0: This is the rate at which the mutation scale decays at after each generation
-- breeding_ratio=0: Each generation is created through mutation by default. However, you can choose to breed models instead
+timestamp,open,high,low,close,volume
+2017-01-01 18:52:00,992.83,993.76,992.4,993.4,2.83443
+2017-01-01 18:53:00,993.0,993.0,992.51,992.51,0.55261
+...
+```
 
 ### Fitness callback  
 

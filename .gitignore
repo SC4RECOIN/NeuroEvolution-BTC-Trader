@@ -11,7 +11,7 @@ __pycache__
 *.npy
 
 # csv price data
-*.csv
+coinbase-1min-large.csv
 
 # saved models
 model
