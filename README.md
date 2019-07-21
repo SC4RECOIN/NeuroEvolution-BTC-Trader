@@ -6,6 +6,19 @@ Tensorflow is used to build a population of models that breed and mutate iterati
 
 ---
 
+## Run
+
+Start the python backend then start the React dev server
+```
+python server.py
+npm run start --prefix=interface
+```
+You can also build the react project and then run _server.py_ (flask will see the static build files)  
+```
+npm run build --prefix=interface
+python server.py
+```
+
 ## Usage  
 
 Using the trading framework is very easy. All you need to do is specify the mutation rate, mutation scale, and network parameters. This is passed into the _Population()_ object which constructs a population with the given parameters. In _pop.evolve()_ the fitness of each model is used in a pooling algorithm to decide which models to use in the next generation. The models are then copied over to the next generation and randomly mutated based on the _w_mutation_rate_ parameter. In _pop.run()_ the models are fed inputs and the fitness is assigned based on how it performs in the fitness callback. The best model is saved and tested and the whole process starts over again until the desired amount of generations is achieved.
@@ -35,11 +48,11 @@ pop = Population(network_params,
 for g in range(generations):
     pop.evolve(g)
     gen_best = pop.run(inputs_train, price_train, fitness_callback=calculate_profit)
-    gen_best.save()
     pop.test(inputs_test, price_test, fitness_callback=calculate_profit)
+    gen_best.save()
 ```
 
-### Population() parameters  
+### Population parameters  
 
 - network_params: This is a dictionary that specifies network parameters
 - pop_size: This is the size of the population that will be used through each generation
@@ -74,32 +87,8 @@ def calculate_profit(trades, trade_prices):
 
 ---  
 
-### Sample console output
+### To Do
 
-```
-creating population 1
-evaluating population....
-average score: -2.26%
-best score: 148.30%
-record score: 148.30%
-time: 4.54s
-test score: 1.25%
-=========================
-creating population 2
-evaluating population....
-average score: 21.37%
-best score: 168.31%
-record score: 168.31%
-time: 2.88s
-test score: -11.39%
-=========================
-creating population 3
-evaluating population....
-average score: 40.26%
-best score: 280.08%
-record score: 280.08%
-time: 2.83s
-test score: -7.51%
-...
-...
-```
+- create Dockerfile
+- allow adjustments to TA periods
+- better metrics
