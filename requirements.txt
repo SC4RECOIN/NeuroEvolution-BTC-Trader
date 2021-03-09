@@ -1,9 +1,0 @@
-python-socketio
-tensorflow
-scikit-learn
-numpy
-pandas
-Flask
-finta==0.3.8
-aiohttp
-joblib
